@@ -59,10 +59,11 @@ model = LinearRegression()
 model.fit(trainx, trainy)
 error1 = sk.metrics.mean_squared_error(trainy, model.predict(trainx))
 error2 = sk.metrics.mean_squared_error(testy, model.predict(testx))
-print("Logistic regression results: MSE - train,test")
+print("Linear regression results: MSE - train,test")
 print(error1)
 print(error2)
 print(model.coef_)
+
 
 
 #########################Optimize Boosted Tree#################################
@@ -106,8 +107,7 @@ print(error3)
 print(error4)
 features=model.feature_importances_
 temp=dftest
-temp['predicted']=model.predict_proba(testx)[:,1]
-temp['predicted2']=model.predict(testx)
+temp['predicted']=model.predict(testx)
 
 
 ###########################See how a naive model does##########################
@@ -128,7 +128,7 @@ testy = pd.to_numeric(dftest['Actual'])
 testx = dftest.drop(['Actual'], axis=1).values
 #validatey = pd.to_numeric(dfvalidate['Actual'])
 #validatex = dfvalidate.drop(['Actual'], axis=1).values
-model = LogisticRegression()
+model = LinearRegression()
 model.fit(trainx, trainy)
 error5 = sk.metrics.mean_squared_error(trainy,model.predict(trainx))
 error6 = sk.metrics.mean_squared_error(testy,model.predict(testx))
