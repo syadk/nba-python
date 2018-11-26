@@ -4,7 +4,7 @@ import numpy as np
 import os 
 
 
-N=5
+N=10
 
 def partTwo(GameID,df):
     N2=1
