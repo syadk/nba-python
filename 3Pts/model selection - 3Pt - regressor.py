@@ -3,17 +3,16 @@ import sklearn as sk
 import numpy as np
 import os 
 
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.neural_network import MLPClassifier
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, train_test_split
 
-#os.chdir('C:\\Users\Kareem Kudus\Desktop\Python Stuff\Basketball')
-
+os.chdir('C:\\GitHub\\nba-python\\3Pts\\3Pts Dataframes')
 
 ############################User defined stuff###############################
 mid=1.5
-N=5
+N=10
 stat='3Pt'
 historical='Player_3PT'
 
@@ -56,7 +55,7 @@ testx = dftest.drop(['Actual'], axis=1).values
 #validatex = dfvalidate.drop(['Actual'], axis=1).values
 
 ######################Try a simple logistic regression########################
-model = LogisticRegression()
+model = LinearRegression()
 model.fit(trainx, trainy)
 error1 = sk.metrics.mean_squared_error(trainy, model.predict(trainx))
 error2 = sk.metrics.mean_squared_error(testy, model.predict(testx))
