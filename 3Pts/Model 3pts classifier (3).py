@@ -3,26 +3,25 @@ import sklearn as sk
 import numpy as np
 import os 
 
-from sklearn.linear_model import LogisticRegression, LinearRegression
-from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import train_test_split
 
-
-#os.chdir('Rebounds DataFrames')
-os.chdir('C:\\GitHub\\nba-python\\Rebounds\\Rebounds Dataframes')
+#os.chdir('C:\\Users\Kareem Kudus\Desktop\Python Stuff\Basketball')
 
 
 ############################User defined stuff###############################
-
+mid=1.5
 N=5
-stat='RBS'
-historical='Player_Rebounds'
+stat='3Pt'
+historical='Player_3PT'
 
 
+    
 #Portion of data for train, test and validation
-test_size = 0.175
+test_size  = 0.175
+
 #ptrain=0.7
 #ptest=0.2
 #pval=0.1
@@ -36,15 +35,13 @@ df = df.drop(['player', 'day'], axis=1)
 
 
 
-
 #Split and sort into train, test and validate based on proportions defined by user
+dftrain, dftest = train_test_split(df, test_size=test_size, random_state=101)
+
 #num=df.shape[0]
 #dftrain=df.iloc[0:round(num*ptrain)]
 #dftest=df.iloc[round(num*ptrain)+1:round(num*(ptrain+ptest))]
 #dfvalidate=df.iloc[round(num*(ptrain+ptest))+1:num]
-
-
-dftrain, dftest = train_test_split(df, test_size=test_size, random_state=101)
 
 
 #################Format data for training and teting model#####################
@@ -58,15 +55,12 @@ testx = dftest.drop(['Actual'], axis=1).values
 #validatey = pd.to_numeric(dfvalidate['Actual'])
 #validatex = dfvalidate.drop(['Actual'], axis=1).values
 
-######################Try a simple linear regression########################
-model = LinearRegression()
+######################Try a simple logistic regression########################
+model = LogisticRegression()
 model.fit(trainx, trainy)
-#error1 = sk.metrics.log_loss(trainy,model.predict_proba(trainx))
-#error2 = sk.metrics.log_loss(testy,model.predict_proba(testx))
 error1 = sk.metrics.mean_squared_error(trainy, model.predict(trainx))
 error2 = sk.metrics.mean_squared_error(testy, model.predict(testx))
-print("Logistic regression results")
-print("Mean Squared Error: train then test")
+print("Logistic regression results: MSE - train,test")
 print(error1)
 print(error2)
 print(model.coef_)
@@ -82,9 +76,8 @@ opt_learning_rate=0.1
 
 #Optimize some parameters
 param_test1 = {'n_estimators':[100,200,400,800,1600,3200],'learning_rate':[0.001,0.003,0.01,0.03,0.1],'max_depth':[1,2,3,4,5]}
-
 gsearch1 = GridSearchCV(estimator = GradientBoostingRegressor(min_samples_split=opt_min_split,min_samples_leaf=opt_min_samples_leaf), iid=False, 
-                                                              param_grid = param_test1,scoring='neg_mean_squared_error',
+                                                              param_grid = param_test1,scoring='neg_log_loss',
                                                               cv=5, verbose=0)
 gsearch1.fit(trainx, trainy)
 opt_n_estimators=gsearch1.best_params_['n_estimators']
@@ -94,10 +87,9 @@ opt_max_depth=gsearch1.best_params_['max_depth']
 
 #Optimize some parameters
 param_test2 = {'min_samples_leaf':[10,25,50,100], 'min_samples_split':[10,25,50,100]}
-
 gsearch2 = GridSearchCV(estimator = GradientBoostingRegressor(n_estimators=opt_n_estimators,max_depth=opt_max_depth,
                                                               learning_rate=opt_learning_rate),iid=False,
-                                                              param_grid = param_test2,scoring='neg_mean_squared_error',
+                                                              param_grid = param_test2,scoring='neg_log_loss',
                                                               cv=5, verbose=0)
 gsearch2.fit(trainx, trainy)
 opt_min_samples_leaf=gsearch2.best_params_['min_samples_leaf']
@@ -108,7 +100,6 @@ model = GradientBoostingRegressor(n_estimators=opt_n_estimators,min_samples_spli
                                 max_depth=opt_max_depth,learning_rate=opt_learning_rate,
                                 min_samples_leaf=opt_min_samples_leaf)
 model.fit(trainx, trainy)
-
 error3 = sk.metrics.mean_squared_error(trainy,model.predict(trainx))
 error4 = sk.metrics.mean_squared_error(testy,model.predict(testx))
 print("Optimized tree results")
@@ -116,8 +107,8 @@ print(error3)
 print(error4)
 features=model.feature_importances_
 temp=dftest
-temp = temp[['Actual']]
-temp['predicted']=model.predict(testx)
+temp['predicted']=model.predict_proba(testx)[:,1]
+temp['predicted2']=model.predict(testx)
 
 
 ###########################See how a naive model does##########################
@@ -136,10 +127,8 @@ trainy = pd.to_numeric(dftrain['Actual'])
 trainx = (dftrain.drop(['Actual'], axis=1)).values
 testy = pd.to_numeric(dftest['Actual'])
 testx = dftest.drop(['Actual'], axis=1).values
-
 #validatey = pd.to_numeric(dfvalidate['Actual'])
 #validatex = dfvalidate.drop(['Actual'], axis=1).values
-
 model = LogisticRegression()
 model.fit(trainx, trainy)
 error5 = sk.metrics.mean_squared_error(trainy,model.predict(trainx))
