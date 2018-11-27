@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import numpy as np
 import os 
 
-N=5
+N=10
  
 def partTwo(GameID):
     N2=1
@@ -135,17 +135,16 @@ df_data.columns=['Actual','Player_Rebounds','Player_Rebounds_Short',
 
 
 def f_dates(x):  
-    return x[13].days
+    return x[20].days
 df_data['DaysOff']=df_data.apply(f_dates, axis=1)
 
 def f_place(x): 
-    if x[14]=='R':
+    if x[21]=='R':
         return 0
     else:
         return 1
 df_data['place']=df_data.apply(f_place, axis=1)
 
-#df_data.to_pickle('RBS dataframe N1 and 10.pkl')
 df_data.to_pickle('RBS dataframe N'+str(N)+'.pkl')
 
 
