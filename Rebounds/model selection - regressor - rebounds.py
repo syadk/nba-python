@@ -157,9 +157,7 @@ temp['predictedNaive']=model.predict(testx)
 
 
 ###########################Output the results##########################
-if os.path.isfile(stat+' results.csv'):
-    df_out_old = pd.read_csv(stat+' results.csv')
-    df_out = pd.concat([df_out_old, df_out])
+
 
 df_out=pd.DataFrame([N,dataFile,opt_n_estimators,opt_min_split,opt_max_depth,
         opt_learning_rate,opt_min_samples_leaf,error1,error2,error3,
@@ -169,7 +167,9 @@ df_out.columns=['N', 'dataFile','opt_n_estimators','opt_min_split','opt_max_dept
                 'opt_learning_rate','opt_min_samples_leaf','Linear train','Linear test',
                 'Boost train','Boost test','Naive train','Naive test','test size']
 
-
+if os.path.isfile(stat+' results.csv'):
+    df_out_old = pd.read_csv(stat+' results.csv')
+    df_out = pd.concat([df_out_old, df_out])
 
 
 df_out.to_csv(stat+' results.csv',index=False)
