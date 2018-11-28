@@ -1,0 +1,2 @@
+N,dataFile,opt_n_estimators,opt_min_split,opt_max_depth,opt_learning_rate,opt_min_samples_leaf,Linear train,Linear test,Boost train,Boost test,Naive train,Naive test,test size
+10,RBS dataframe N10.pkl,400,100,1,0.1,25,10.608811638654629,10.629315728104343,10.408809496261204,10.719570442389813,12.05977264393106,12.321953327571306,0.175
