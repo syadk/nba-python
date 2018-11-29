@@ -19,7 +19,7 @@ stat='RBS'
 historical='Player_Rebounds'
 
 #Portion of data for train and test
-test_size = 0.175
+test_size = 0.25
 
 ############################Import and sort data###############################
 dataFile=stat+' dataframe N'+str(N)+'.pkl'
@@ -54,12 +54,12 @@ print(model.coef_)
 
 #########################Optimize Boosted Tree#################################
 #Optimize some parameters
-param_test1 = {'hidden_layer_sizes':[(4,2),(8,4,2),(16,8,4,2),(32,16,8,4,2),(25,5),(125,25,5),(625,125,25,5)],
-                                     'max_iter':[100,300,1000],
+param_test1 = {'hidden_layer_sizes':[(4,2),(8,4,2),(16,8,4,2),(32,16,8,4,2),(64,32,16,8,4,2),(128,64,32,16,8,4,2),(25,5),(125,25,5),(10,10,10,10,10,10)],
+                                     'max_iter':[500,1000,2000],
                                      'alpha':[0.001,0.01,0.1,1,10]}
 
 gsearch1 = GridSearchCV(estimator = MLPRegressor(), iid=False,param_grid = param_test1,
-                        scoring='neg_log_loss',cv=3, verbose=2)
+                        scoring='neg_mean_squared_error',cv=3, verbose=2)
 gsearch1.fit(trainx, trainy)
 opt_hidden_layer_sizes=gsearch1.best_params_['hidden_layer_sizes']
 opt_max_iter=gsearch1.best_params_['max_iter']
@@ -69,15 +69,14 @@ opt_alpha=gsearch1.best_params_['alpha']
 #Test out the optimized model
 model = MLPRegressor(hidden_layer_sizes=opt_hidden_layer_sizes,max_iter=opt_max_iter,alpha=opt_alpha)
 model.fit(trainx, trainy)
-error3 = sk.metrics.log_loss(trainy,model.predict_proba(trainx))
-error4 = sk.metrics.log_loss(testy,model.predict_proba(testx))
+error3 = sk.metrics.mean_squared_error(trainy,model.predict(trainx))
+error4 = sk.metrics.mean_squared_error(testy,model.predict(testx))
 print("Optimized NN results")
 print(error3)
 print(error4)
-accuracy2 = sk.metrics.mean_squared_error(testy, model.predict(testx))
-temp=dftest
-temp['predicted']=model.predict_proba(testx)[:,1]
-temp['predicted2']=model.predict(testx)
+#temp=dftest
+#temp['predicted']=model.predict_proba(testx)[:,1]
+#temp['predicted2']=model.predict(testx)
 
 
 ###########################See how a naive model does##########################
@@ -98,7 +97,7 @@ print("Naive model results")
 print(error5)
 print(error6)
 print(model.coef_)
-temp['predictedNaive']=model.predict(testx)
+#temp['predictedNaive']=model.predict(testx)
 
 
 
