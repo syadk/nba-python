@@ -144,7 +144,7 @@ testx = dftest.drop(['Actual'], axis=1).values
 #validatey = pd.to_numeric(dfvalidate['Actual'])
 #validatex = dfvalidate.drop(['Actual'], axis=1).values
 
-model = LogisticRegression()
+model = LinearRegression()
 model.fit(trainx, trainy)
 error5 = sk.metrics.mean_squared_error(trainy,model.predict(trainx))
 error6 = sk.metrics.mean_squared_error(testy,model.predict(testx))

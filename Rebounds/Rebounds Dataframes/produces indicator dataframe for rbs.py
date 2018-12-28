@@ -6,8 +6,8 @@ import os
 N=20
  
 def partTwo(GameID):
-    N2=1
-    threshold=5
+    N2=5
+    threshold=3
     df_Game = df.loc[df['GameID'] == GameID]
     oppTeam=df_Game['OPP TEAM'].iloc[0]
     ownTeam=df_Game['OWN TEAM'].iloc[0]
@@ -69,17 +69,18 @@ def partTwo(GameID):
                 if df_Player.shape[0]>=N:
                     if sum(df_Player['TOT'].tail(N))>threshold*N:
                         #Calculate player statistics
-                        Player_Rebounds=(df_Player['TOT'].tail(N)).sum()
-                        Player_Rebounds_Short=(df_Player['TOT'].tail(N2)).sum()
+                        Player_Rebounds=((df_Player['TOT'].tail(N)).sum())/N
+                        Player_Rebounds_Short=((df_Player['TOT'].tail(N2)).sum())/N2
                         DaysOff=day-df_Player['DATE'].iloc[-1]
                         Player_ORebounds=df_Player['OR'].tail(N).sum()
                         Player_DRebounds=df_Player['DR'].tail(N).sum()
                         Median_Rebounds=df_Player['TOT'].tail(N).median()
-                        Max_Rebounds=df_Player['TOT'].tail(N).max()
-                        Min_Rebounds=df_Player['TOT'].tail(N).min()
+                        Std_Rebounds=df_Player['TOT'].tail(N).std()
+                        Max_Rebounds=df_Player['TOT'].tail(N).max()-((df_Player['TOT'].tail(N)).sum())/N
+                        Min_Rebounds=df_Player['TOT'].tail(N).min()-((df_Player['TOT'].tail(N)).sum())/N
                         #Put result together with indicators
                         df_temp=pd.DataFrame([actual,Player_Rebounds,Player_Rebounds_Short,
-                                              Median_Rebounds, Max_Rebounds, Min_Rebounds,
+                                              Median_Rebounds, Std_Rebounds, Max_Rebounds, Min_Rebounds,
                                               Player_ORebounds, Player_DRebounds,
                                               Opp_OREB_Ag, Opp_DREB_Ag,
                                               Own_FGperc_Ag,Own_FGperc_For,Own_FG_Ag,Own_FG_For,
@@ -96,7 +97,7 @@ df_data = pd.DataFrame()
 def f_gameID(x):  
     return x[1]+x[4]+x[5] 
 ###########################2016-2017###################################
-df = pd.read_pickle('C:/Users/syad/OneDrive/NBA Python/BigDataBall Data/2016-2017 NBA Player Boxscore.pkl')
+df = pd.read_excel('C:\\GitHub\\nba-python\\Rebounds\\Rebounds Dataframes\\NBA-2016-2017-Player-BoxScore-Dataset.xlsx')
 df['GameID']=df.apply(f_gameID, axis=1)
 df['DATE'] = pd.to_datetime(df['DATE'])
 # loop for every game
@@ -107,7 +108,7 @@ for i in uniqueGames:
     print(i)
 
 ###########################2017-2018###################################
-df = pd.read_pickle('C:/Users/syad/OneDrive/NBA Python/BigDataBall Data/2017-2018 NBA Player Boxscore.pkl')
+df = pd.read_excel('C:\\GitHub\\nba-python\\Rebounds\\Rebounds Dataframes\\NBA-2017-2018-Player-BoxScore-Dataset.xlsx')
 df['GameID']=df.apply(f_gameID, axis=1)
 df['DATE'] = pd.to_datetime(df['DATE'])
 # loop for every game
@@ -124,7 +125,7 @@ for i in uniqueGames:
 
     
 df_data.columns=['Actual','Player_Rebounds','Player_Rebounds_Short',
-                 'Median_Rebounds', 'Max_Rebounds', 'Min_Rebounds',
+                 'Median_Rebounds', 'Std_Rebounds','Max_Rebounds', 'Min_Rebounds',
                                               'Player_ORebounds', 'Player_DRebounds',
                                               'Opp_OREB_Ag', 'Opp_DREB_Ag',
                                               'Own_FGperc_Ag','Own_FGperc_For','Own_FG_Ag','Own_FG_For',
@@ -135,11 +136,11 @@ df_data.columns=['Actual','Player_Rebounds','Player_Rebounds_Short',
 
 
 def f_dates(x):  
-    return x[20].days
+    return x[21].days
 df_data['DaysOff']=df_data.apply(f_dates, axis=1)
 
 def f_place(x): 
-    if x[21]=='R':
+    if x[22]=='R':
         return 0
     else:
         return 1
