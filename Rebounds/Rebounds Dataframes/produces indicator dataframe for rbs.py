@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import numpy as np
 import os 
 
-N=10
+N=20
  
 def partTwo(GameID):
     N2=1
