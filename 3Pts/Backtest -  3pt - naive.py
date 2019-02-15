@@ -21,7 +21,7 @@ mid=1.5
     
 
 ##########################################Pull in odds###########################################
-df_odds = pd.read_excel("Player Specials Master File - includes actual results - nov 5.xlsx")
+df_odds = pd.read_excel("C:/GitHub/nba-python/Player Specials with Actual - dec 27.xlsx")
 df_odds=df_odds[df_odds['units']=='ThreePointFieldGoals']
 df_odds = df_odds.dropna()
 df_odds=df_odds[df_odds['#']==mid] #This is a simplifying assumption, for now
@@ -29,7 +29,7 @@ df_odds=df_odds.reset_index()
 df_odds['dateGame'] = pd.to_datetime(df_odds['dateGame'])                      
 
 #########################################Data from this season###################################
-df_this_season = pd.read_excel("nba-season-player-feed.xlsx")
+df_this_season = pd.read_excel("C:/GitHub/nba-python/nba-season-player-feed.xlsx")
 df_this_season['DATE'] = pd.to_datetime(df_this_season['DATE'])
 
 
