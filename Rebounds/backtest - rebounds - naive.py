@@ -9,11 +9,17 @@ import os
 from sklearn.ensemble import GradientBoostingClassifier
 import numpy as np
 from sklearn.linear_model import LogisticRegression, LinearRegression
+from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor, RandomForestRegressor
+from sklearn.neural_network import MLPClassifier, MLPRegressor
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split
+from sklearn.cluster import KMeans
+from sklearn.feature_selection import SelectPercentile, SelectFromModel, RFE
 
 #######################################User defined variables#####################################
 #os.chdir('C:\\Users\Kareem Kudus\Desktop\Python Stuff\Basketball')
 stat='RBS'
-N=5 #THis shouldnt really beuser defined - should pull in from optimal parameters
+N=10 #THis shouldnt really beuser defined - should pull in from optimal parameters
 #historical='Player_3PT'
 N2=1
 #Will need to generalzie to all mids later
@@ -50,21 +56,36 @@ def model_selection(mid):
     df = pd.read_pickle('C:/GitHub/nba-python/Rebounds/Rebounds Dataframes/'+dataFile)
     df = df.dropna()
     df = df.drop(['player', 'day'], axis=1)
-#    df = df[['Actual', 'Player_Rebounds']]
-
+    df = df[['Actual', 'Player_Rebounds', 'Own_FGperc_Ag', 'Own_FGperc_For',
+         'Opp_FGperc_Ag', 'Opp_FGperc_For', 'place']]
     dftrain = df.copy()
+    
+    kmeans = KMeans(n_clusters=3, random_state=101)
+    kmeans.fit(trainx)
+    
+
+    dftrain['cluster'] = kmeans.labels_
+    
+    dftrain1 = dftrain.loc[dftrain['cluster'] == 0]
+    dftrain1 = dftrain1.drop(['cluster'], axis=1)
+    dftrain1.loc[dftrain1['Actual'] < mid, ['Actual']] = 0
+    dftrain1.loc[dftrain1['Actual'] > mid, ['Actual']] = 1
+    dftrain1.reset_index(drop=True,inplace=True)
+    trainx1 = dftrain1.drop(['Actual'], axis=1)
+    trainy1 = pd.to_numeric(dftrain1['Actual'])
+    
+
 #    dftrain = dftrain.loc[dftrain['#'] == mid]
-    dftrain.loc[dftrain['Actual'] < mid, ['Actual']] = 0
-    dftrain.loc[dftrain['Actual'] > mid, ['Actual']] = 1
-    dftrain.reset_index(drop=True,inplace=True)
+
+
 
     
-    trainy = pd.to_numeric(dftrain['Actual'])
-    temp=(dftrain.drop(['Actual'], axis=1))
-    temp.reset_index(drop=True,inplace=True)
-    trainx = temp.values
+#    trainy = pd.to_numeric(dftrain['Actual'])
+#    temp=(dftrain1.drop(['Actual'], axis=1))
+#    temp.reset_index(drop=True,inplace=True)
+#    trainx = temp.values
     mlp = LogisticRegression()
-    mlp.fit(trainx,trainy)
+    mlp.fit(trainx1,trainy1)
     
     return(mlp)
     
@@ -144,7 +165,7 @@ def rebound_input(df_this_season, oppTeam, ownTeam, day, player, place):
 #            actual=df_Player[df_Player['DATE']==day]['TOT'].iloc[0]
 #            df_Player=df_Player[df_Player['DATE']<day]
 #            if df_Player.shape[0]>=N:
-        Player_Rebounds=((df_Player['TOT'].tail(N)).sum())
+        Player_Rebounds=((df_Player['TOT'].tail(N)).sum())/N
         Player_Rebounds_Short=((df_Player['TOT'].tail(N2)).sum())/N2
         DaysOff=day-df_Player['DATE'].iloc[-1]
         Player_ORebounds=df_Player['OR'].tail(N).sum()
@@ -154,15 +175,16 @@ def rebound_input(df_this_season, oppTeam, ownTeam, day, player, place):
         Max_Rebounds=df_Player['TOT'].tail(N).max()-((df_Player['TOT'].tail(N)).sum())/N
         Min_Rebounds=df_Player['TOT'].tail(N).min()-((df_Player['TOT'].tail(N)).sum())/N
 
-        predictionInput = [Player_Rebounds,Player_Rebounds_Short,
-                                      Median_Rebounds, Max_Rebounds, Min_Rebounds,
-                                      Player_ORebounds, Player_DRebounds,
-                                      Opp_OREB_Ag, Opp_DREB_Ag,
-                                      Own_FGperc_Ag,Own_FGperc_For,Own_FG_Ag,Own_FG_For,
-                                      Opp_FGperc_Ag,Opp_FGperc_For,Opp_FG_Ag,Opp_FG_For,
-                                      Opp_REB_For,Opp_REB_Ag,
-                                      DaysOff.days,place]
-#        predictionInput = [Player_Rebounds]
+#        predictionInput = [Player_Rebounds,Player_Rebounds_Short,
+#                                      Median_Rebounds, Max_Rebounds, Min_Rebounds,
+#                                      Player_ORebounds, Player_DRebounds,
+#                                      Opp_OREB_Ag, Opp_DREB_Ag,
+#                                      Own_FGperc_Ag,Own_FGperc_For,Own_FG_Ag,Own_FG_For,
+#                                      Opp_FGperc_Ag,Opp_FGperc_For,Opp_FG_Ag,Opp_FG_For,
+#                                      Opp_REB_For,Opp_REB_Ag,
+#                                      DaysOff.days,place]
+        predictionInput = [Player_Rebounds, Own_FGperc_Ag, Own_FGperc_For,
+         Opp_FGperc_Ag, Opp_FGperc_For, place]
     else:
         predictionInput = [np.nan]
         

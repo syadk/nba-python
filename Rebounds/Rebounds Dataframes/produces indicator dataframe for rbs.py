@@ -1,12 +1,14 @@
 import pandas as pd
 from datetime import datetime, timedelta
 import numpy as np
-import os 
+import os
 
-N=20
+
+N=5
+N2=3
  
 def partTwo(GameID):
-    N2=5
+    
     threshold=3
     df_Game = df.loc[df['GameID'] == GameID]
     oppTeam=df_Game['OPP TEAM'].iloc[0]
@@ -33,6 +35,8 @@ def partTwo(GameID):
     	  #Calculate metrics for opposing team
         Opp_FGperc_Ag=df_Opp_Ag['FG'].sum()/df_Opp_Ag['FGA'].sum()
         Opp_FGperc_For=df_Opp_For['FG'].sum()/df_Opp_For['FGA'].sum()
+        Opp_FGA_Ag = df_Opp_Ag['FGA'].sum()
+        Opp_FGA_For = df_Opp_For['FGA'].sum()
         Opp_FG_Ag=df_Opp_Ag['FG'].sum()
         Opp_FG_For=df_Opp_For['FG'].sum()
         Opp_REB_For=df_Opp_For['TOT'].sum()
@@ -85,7 +89,7 @@ def partTwo(GameID):
                                               Opp_OREB_Ag, Opp_DREB_Ag,
                                               Own_FGperc_Ag,Own_FGperc_For,Own_FG_Ag,Own_FG_For,
                                               Opp_FGperc_Ag,Opp_FGperc_For,Opp_FG_Ag,Opp_FG_For,
-                                              Opp_REB_For,Opp_REB_Ag,
+                                              Opp_REB_For,Opp_REB_Ag, Opp_FGA_For, Opp_FGA_Ag,
                                               DaysOff,place,i,day]).transpose()
                         df_out=pd.concat([df_out, df_temp])
     return df_out
@@ -130,17 +134,17 @@ df_data.columns=['Actual','Player_Rebounds','Player_Rebounds_Short',
                                               'Opp_OREB_Ag', 'Opp_DREB_Ag',
                                               'Own_FGperc_Ag','Own_FGperc_For','Own_FG_Ag','Own_FG_For',
                                               'Opp_FGperc_Ag','Opp_FGperc_For','Opp_FG_Ag','Opp_FG_For',
-                                              'Opp_REB_For','Opp_REB_Ag',
+                                              'Opp_REB_For','Opp_REB_Ag', 'Opp_FGA_For', 'Opp_FGA_Ag',
                                               'DaysOff','place','player','day']
 # ------------------------
 
 
 def f_dates(x):  
-    return x[21].days
+    return x[23].days
 df_data['DaysOff']=df_data.apply(f_dates, axis=1)
 
 def f_place(x): 
-    if x[22]=='R':
+    if x[24]=='R':
         return 0
     else:
         return 1
