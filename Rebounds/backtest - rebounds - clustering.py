@@ -19,7 +19,7 @@ from sklearn.feature_selection import SelectPercentile, SelectFromModel, RFE
 #######################################User defined variables#####################################
 #os.chdir('C:\\Users\Kareem Kudus\Desktop\Python Stuff\Basketball')
 stat='RBS'
-N=10 #THis shouldnt really beuser defined - should pull in from optimal parameters
+N=5 #THis shouldnt really beuser defined - should pull in from optimal parameters
 #historical='Player_3PT'
 N2=1
 #Will need to generalzie to all mids later
@@ -59,16 +59,16 @@ df = df.drop(['player', 'day'], axis=1)
 #         'Opp_FGA_For', 'place']]
 
 dftrain = df.copy()
-#trainx = dftrain.drop(['Actual'], axis=1)
-trainx = dftrain[['Player_Rebounds']]
+trainx = dftrain.drop(['Actual'], axis=1)
+#trainx = dftrain[['Player_Rebounds']]
 kmeans = KMeans(n_clusters=5, random_state=102)
 kmeans.fit(trainx)
 
 #train model given a specific mid
 def model_selection(mid, predictionInput):
 
-    input_cluster = kmeans.predict([[predictionInput[0][0]]])[0]
-#    input_cluster = kmeans.predict(predictionInput)[0]
+#    input_cluster = kmeans.predict([[predictionInput[0][0]]])[0]
+    input_cluster = kmeans.predict(predictionInput)[0]
 
     
 
@@ -81,16 +81,16 @@ def model_selection(mid, predictionInput):
     dftrain_cluster.loc[dftrain_cluster['Actual'] > mid, ['Actual']] = 1
     dftrain_cluster.reset_index(drop=True,inplace=True)
     
-    trainx_cluster = dftrain_cluster.drop(['Actual'], axis=1)
-#    trainx_cluster = dftrain_cluster[['Player_Rebounds']]
+#    trainx_cluster = dftrain_cluster.drop(['Actual'], axis=1)
+    trainx_cluster = dftrain_cluster[['Player_Rebounds']]
 
     trainy_cluster = pd.to_numeric(dftrain_cluster['Actual'])
 
 #    trainx = temp.values
-#    mlp = LogisticRegression()
-    mlp = GradientBoostingClassifier(n_estimators=100,min_samples_split=10,
-                                max_depth=1,learning_rate=0.1,
-                                min_samples_leaf=10)
+    mlp = LogisticRegression()
+#    mlp = GradientBoostingClassifier(n_estimators=100,min_samples_split=10,
+#                                max_depth=1,learning_rate=0.1,
+#                                min_samples_leaf=10)
 #    mlp = GradientBoostingClassifier()
     mlp.fit(trainx_cluster,trainy_cluster)
     
@@ -98,8 +98,8 @@ def model_selection(mid, predictionInput):
     
 def model_selection_regressor(mid):
 
-    input_cluster = kmeans.predict([[predictionInput[0][0]]])[0]
-#    input_cluster = kmeans.predict(predictionInput)[0]
+#    input_cluster = kmeans.predict([[predictionInput[0][0]]])[0]
+    input_cluster = kmeans.predict(predictionInput)[0]
 
     
 
@@ -110,8 +110,8 @@ def model_selection_regressor(mid):
     dftrain_cluster = dftrain_cluster.drop(['cluster'], axis=1)
     dftrain_cluster.reset_index(drop=True,inplace=True)
     
-    trainx_cluster = dftrain_cluster.drop(['Actual'], axis=1)
-#    trainx_cluster = dftrain_cluster[['Player_Rebounds']]
+#    trainx_cluster = dftrain_cluster.drop(['Actual'], axis=1)
+    trainx_cluster = dftrain_cluster[['Player_Rebounds']]
     trainy_cluster = pd.to_numeric(dftrain_cluster['Actual'])
 
 #    dftrain = dftrain.loc[dftrain['#'] == mid]
@@ -213,7 +213,7 @@ def rebound_input(df_this_season, oppTeam, ownTeam, day, player, place):
 df_bets=pd.DataFrame()
 #Now for each potential bet
 #for i in range(df_odds.shape[0]):
-for i in range(1300, 1800):
+for i in range(1100, 1600):
     df_bet=df_odds.ix[i]
     mid = df_bet['#']
     o=df_bet['over_price']
@@ -234,7 +234,7 @@ for i in range(1300, 1800):
 
     predictionInput = rebound_input(df_this_season, oppTeam, ownTeam, day, player, place)
     
-    if ((not(np.isnan(predictionInput[0]))) and mid > 6.5      ):             
+    if ((not(np.isnan(predictionInput[0]))) ):             
         
         predictionInput = np.array(predictionInput).reshape(1,-1)
         
@@ -244,10 +244,10 @@ for i in range(1300, 1800):
 
         
         model = model_selection(mid, predictionInput)
-        yHat= model.predict_proba(predictionInput)
+        yHat= model.predict_proba(predictionInput[0][0])
         
         #just see what they regressor model predicts
-        regressor = model_selection_regressor(mid).predict(predictionInput)
+        regressor = model_selection_regressor(mid).predict(predictionInput[0][0])
         
         
         overPredictedIP=yHat[0,1]
@@ -257,10 +257,10 @@ for i in range(1300, 1800):
         returnO=yHat[0,1]*(o-1)-yHat[0,0]
         returnU=-yHat[0,1]+yHat[0,0]*(u-1)
         
-        if (underPredictedIP > 0.5):
+        if (returnU > 0):
             under = True
             over = False
-        elif (overPredictedIP > 0.5):
+        elif (returnO > 0):
             under = False
             over  = True
         else:
@@ -291,9 +291,8 @@ for i in range(1300, 1800):
             
         #Make prediction for 0 and 1 for this bet
 #        df_temp=pd.DataFrame([player, day,over, under,o,u, mid,actual,overIP,overPredictedIP,underIP,underPredictedIP,returnO, returnU, win, money]).transpose()
-        temp=[player, day, u, returnU, returnO, o, mid,
-              underPredictedIP, overPredictedIP, yHat, actual ,
-              regressor,
+        temp=[player, day, u, returnU, returnO, o, mid, regressor[0],
+              underPredictedIP, overPredictedIP, actual ,
               over, under,win,money]
         df_temp=pd.DataFrame(temp)
         df_temp=df_temp.T
@@ -304,9 +303,9 @@ for i in range(1300, 1800):
     
             
 #df_bets.columns=['player', 'day','over','under','o','u', 'mid','actual','overIP','overPredictedIP','underIP','underPredictedIP','returnO', 'returnU', 'win', 'money']    
-df_bets.columns=['player', 'day', 'u', 'returnu', 'returnO', 'o', 'mid',
-              'underPredictedIP', 'overPredictedIP', 'yHat', 'actual',
-              'regressor',
+df_bets.columns=['player', 'day', 'u', 'returnu', 'returnO', 'o', 'mid', 'regressor',
+              'underPredictedIP', 'overPredictedIP', 'actual',
+             
               'over', 'under', 'win', 'money']
 df_analysis = df_bets.loc[df_bets['money'] != 0]
 print(np.sum(df_bets['money']))
