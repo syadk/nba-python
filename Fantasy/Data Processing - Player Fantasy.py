@@ -3,20 +3,16 @@ import os
 from datetime import datetime, timedelta
 import numpy as np
 
-os.chdir('C:\\GitHub\\nba-python\\BigDataBall Data\Pickle')
-df = pd.read_pickle('NBA-2018-2019-Player-Boxscore-DFS.pkl')
-df['SAL - FANDUEL'].fillna(value=4000, inplace=True)
-df['FPS - FANDUEL'].fillna(value=15.22, inplace=True)
-df.rename(columns={'FPS - FANDUEL':'FPS', 'GAME-ID':'GameID', 'OPPONENT TEAM':'OPP TEAM'},
-          inplace=True)
+
+
 
 N=5
-N2=3
+N2=2
  
 def partTwo(GameID):
     
     threshold=3
-    df_Game = df.loc[df['GameID'] == GameID]
+    df_Game = df.loc[df['GAME-ID'] == GameID]
     oppTeam=df_Game['OPP TEAM'].iloc[0]
     ownTeam=df_Game['OWN TEAM'].iloc[0]
     day=df_Game['DATE'].iloc[0]
@@ -120,11 +116,16 @@ def f_gameID(x):
 #    print(i)
     
 
-###########################2018-2019 - SAMPLE ###################################
-#df['GAME-ID']=df.apply(f_gameID, axis=1)
+###########################2018-2019 ###################################
+os.chdir('C:\\GitHub\\nba-python\\BigDataBall Data\Pickle')
+df = pd.read_pickle('NBA-2017-2018-Player-Boxscore-DFS_merged.pkl')
+
+df.rename(columns={'FPS - FANDUEL':'FPS','OPPONENT TEAM':'OPP TEAM', 'PLAYER':'PLAYER FULL NAME'},
+          inplace=True)
+df['GAME-ID']=df.apply(f_gameID, axis=1)
 df['DATE'] = pd.to_datetime(df['DATE'])
 # loop for every game
-uniqueGames = df['GameID'].unique()
+uniqueGames = df['GAME-ID'].unique()
 for i in uniqueGames:
     df_result = pd.DataFrame(partTwo((i)))
     df_data = pd.concat([df_data, df_result])
@@ -145,11 +146,11 @@ df_data.columns=['actual','Player_FPS','Player_FPS_Short',
 
 
 def f_dates(x):  
-    return x[23].days
+    return x['DaysOff'].days
 df_data['DaysOff']=df_data.apply(f_dates, axis=1)
 
 def f_place(x): 
-    if x[24]=='R':
+    if x['place']=='R':
         return 0
     else:
         return 1
