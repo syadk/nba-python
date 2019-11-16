@@ -70,6 +70,7 @@ pf = pulp.LpVariable.dicts("pf", names, cat="Binary")
 c = pulp.LpVariable.dicts("c", names, cat="Binary")
 f = pulp.LpVariable.dicts("f", names, cat="Binary")
 g = pulp.LpVariable.dicts("g", names, cat="Binary")
+util = pulp.LpVariable.dicts("util", names, cat="Binary")
 
 
 
@@ -87,39 +88,45 @@ for name, point in points.items():
     costs += lpSum([salaries[name] * c[name]])
     costs += lpSum([salaries[name] * f[name]])
     costs += lpSum([salaries[name] * g[name]])
+    costs += lpSum([salaries[name] * util[name]])
 
-    rewards += lpSum([points[name] * pg[name]  * availables.loc[name, 'PG']])
-    rewards += lpSum([points[name] * sg[name]  * availables.loc[name, 'SG']])
+    rewards += lpSum([points[name] * pg[name]  * availables.loc[name, 'PG']]) # multiple by 3rd term so they can't get points for
+    rewards += lpSum([points[name] * sg[name]  * availables.loc[name, 'SG']]) # positions they don't play for
     rewards += lpSum([points[name] * sf[name]  * availables.loc[name, 'SF']])
     rewards += lpSum([points[name] * pf[name]  * availables.loc[name, 'PF']])
     rewards += lpSum([points[name] * c[name]  * availables.loc[name, 'C']])
     rewards += lpSum([points[name] * f[name]  * availables.loc[name, 'F']])
-    rewards += lpSum([points[name] * g[name]  * availables.loc[name, 'G']]) 
+    rewards += lpSum([points[name] * g[name]  * availables.loc[name, 'G']])
+    rewards += lpSum([points[name] * util[name]  * availables.loc[name, 'UTIL']]) 
 #    prob += lpSum([pos_flex[k] * _vars[k][i] for i in v]) <= pos_flex_available    
 
+#no player should be selected twice
 for name in pg:
-    prob += lpSum([pg[name] + sg[name] + sf[name] + pf[name] + c[name] + f[name] + g[name]]) <= 1
+    prob += lpSum([pg[name] + sg[name] + sf[name] + pf[name] + c[name] + f[name] + g[name] + util[name]]) <= 1
 
 
     
 prob += lpSum(rewards)
-prob += lpSum(costs) <= 46535
-prob += lpSum(lpSum(pg) + lpSum(sg) + lpSum(sf) + lpSum(pf) + lpSum(c) + lpSum(f) +  lpSum(g)) <= 8 
-prob += lpSum(pg) <= 2
-prob += lpSum(sg) <= 2
-prob += lpSum(sf) <= 2
-prob += lpSum(pf) <= 2
-prob += lpSum(c) <= 2
-prob += lpSum(f) <= 2
-prob += lpSum(g) <= 2
+prob += lpSum(costs) <= 50000
 
-prob += lpSum(pg) >= 1
-prob += lpSum(sg) >= 1
-prob += lpSum(sf) >= 1
-prob += lpSum(pf) >= 1
-prob += lpSum(c) >= 1
-prob += lpSum(f) >= 1
-prob += lpSum(g) >= 1
+prob += lpSum(lpSum(pg) + lpSum(sg) + lpSum(sf) + lpSum(pf) + lpSum(c) + lpSum(f) +  lpSum(g) + lpSum(util)) <= 8 
+prob += lpSum(pg) <= 1
+prob += lpSum(sg) <= 1
+prob += lpSum(sf) <= 1
+prob += lpSum(pf) <= 1
+prob += lpSum(c) <= 1
+prob += lpSum(f) <= 1
+prob += lpSum(g) <= 1
+prob += lpSum(util) <= 1
+
+#
+#prob += lpSum(pg) >= 1
+#prob += lpSum(sg) >= 1
+#prob += lpSum(sf) >= 1
+#prob += lpSum(pf) >= 1
+#prob += lpSum(c) >= 1
+#prob += lpSum(f) >= 1
+#prob += lpSum(g) >= 1
 
 prob.solve()
 
