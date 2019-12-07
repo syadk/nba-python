@@ -4,9 +4,10 @@ from itertools import permutations
 from pulp import *
 import re
 
-os.chdir('C:\\Users\\syad\\OneDrive\\NBA Python\\2019 Fantasy Random Work\\Optimizing DFS Lineups with contraints')
+#os.chdir('C:\\Users\\syad\\OneDrive\\NBA Python\\2019 Fantasy Random Work\\Optimizing DFS Lineups with contraints')
+os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Optimizing Lineups')
 
-df = pd.read_excel('DKSalaries.xlsx')
+df = pd.read_csv('nov 17 test.csv')
 df.drop(columns=['Name + ID','Game Info', 'TeamAbbrev'], inplace=True)
 
 
@@ -98,7 +99,6 @@ for name, point in points.items():
     rewards += lpSum([points[name] * f[name]  * availables.loc[name, 'F']])
     rewards += lpSum([points[name] * g[name]  * availables.loc[name, 'G']])
     rewards += lpSum([points[name] * util[name]  * availables.loc[name, 'UTIL']]) 
-#    prob += lpSum([pos_flex[k] * _vars[k][i] for i in v]) <= pos_flex_available    
 
 #no player should be selected twice
 for name in pg:
