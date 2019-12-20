@@ -39,7 +39,7 @@ def load_data(file):
     df = pd.read_pickle(file)
     df = df.dropna()
     df.drop(columns=['Player', 'day'],inplace=True)
-    df = df[['actual', 'Player_FPS']]
+#    df = df[['actual', 'Player_FPS']]
     df.reset_index(drop=True,inplace=True)
 
     dftrain, dftest = train_test_split(df, test_size=0.15)
@@ -163,11 +163,10 @@ file = '2017-2018 DFS Input test.pkl'
     
 
 
-params = OrderedDict(epochs = [500],
+params = OrderedDict(epochs = [200],
                      regularization = [0.001],
-#                     input_size = [12],
-                     layers_size = [10],
-                     num_layers = [10])
+                     layers_size = [5],
+                     num_layers = [5])
 
 class RunBuilder():
     @staticmethod
