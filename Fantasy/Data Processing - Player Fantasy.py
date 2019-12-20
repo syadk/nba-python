@@ -77,13 +77,33 @@ def partTwo(GameID):
                         Std_FPS=df_Player['FPS'].tail(N).std()
                         Max_FPS=df_Player['FPS'].tail(N).max()-((df_Player['FPS'].tail(N)).sum())/N
                         Min_FPS=df_Player['FPS'].tail(N).min()-((df_Player['FPS'].tail(N)).sum())/N
+                        Player_Points = df_Player['PTS'].tail(N).sum()/N
+                        Player_TOT = df_Player['TOT'].tail(N).sum()/N
+                        Player_Minutes = df_Player['MIN'].tail(N).sum()/N
+                        Player_FG = df_Player['FG'].tail(N).sum()/N
+                        Player_FGA = df_Player['FGA'].tail(N).sum()/N
+                        Player_3P = df_Player['3P'].tail(N).sum()/N
+                        Player_3PA = df_Player['3PA'].tail(N).sum()/N
+                        Player_Assists = df_Player['A'].tail(N).sum()/N
+                        Player_Fouls = df_Player['PF'].tail(N).sum()/N
+                        Player_Turnovers = df_Player['TO'].tail(N).sum()/N
+                        Player_Blocks = df_Player['BL'].tail(N).sum()/N
+                        #think about putting salary, prob not though since will heavily influence model with their predictions
                         #Put result together with indicators
+                        global var_list
 
-                        df_temp=pd.DataFrame([actual,Player_FPS,Player_FPS_Short,
-                                              Median_FPS, Std_FPS, Max_FPS, Min_FPS,
-                                              Opp_FPS_Ag, Opp_FPS_For,
-                                              Own_FPS_Ag, Own_FPS_For,
-                                              DaysOff,place,i,day]).transpose()                       
+                        var_list = {'actual':actual, 'Player_FPS':Player_FPS, 'Player_FPS_Short':Player_FPS_Short,
+                                              'Median_FPS':Median_FPS, 'Std_FPS':Std_FPS, 'Max_FPS':Max_FPS,
+                                              'Min_FPS':Min_FPS, 'Player_Points':Player_Points, 'Player_TOT':Player_TOT,
+                                              'Player_Minutes':Player_Minutes, 
+                                              'Player_FG':Player_FG, 'Player_FGA':Player_FGA,
+                                              'Player_3P':Player_3P, 'Player_3PA':Player_3PA,
+                                              'Player_Assists':Player_Assists, 'Player_Fouls':Player_Fouls,
+                                              'Player_Turnovers':Player_Turnovers, 'Player_Blocks':Player_Blocks,
+                                              'Opp_FPS_Ag':Opp_FPS_Ag, 'Opp_FPS_For':Opp_FPS_For,
+                                              'Own_FPS_Ag':Own_FPS_Ag, 'Own_FPS_For':Own_FPS_For,
+                                              'DaysOff':DaysOff,'place':place,'Player':i,'day':day}
+                        df_temp=pd.DataFrame.from_dict(var_list, orient='index').transpose()                       
                         df_out=pd.concat([df_out, df_temp])
     return df_out
         
@@ -122,6 +142,22 @@ df = pd.read_pickle('NBA-2017-2018-Player-Boxscore-DFS_merged.pkl')
 
 df.rename(columns={'FPS - FANDUEL':'FPS','OPPONENT TEAM':'OPP TEAM', 'PLAYER':'PLAYER FULL NAME'},
           inplace=True)
+os.chdir('C:\\GitHub\\nba-python\\BigDataBall Data')
+#add win loss % to original dataframes
+#dfteam = pd.read_excel('2017-2018_NBA_Box_Score_Team-Stats.xlsx')
+#dfteam = dfteam[['DATE','TEAMS','F']]
+#dfteam['WIN'] = 0
+#for i in range(0, dfteam.shape[0], 2):
+#    if dfteam['F'].iloc[i]>dfteam['F'].iloc[i+1]:
+#        dfteam['WIN'].iloc[i] = 1
+#    else:
+#        dfteam['WIN'].iloc[i+1] = 1
+#dfteam['DATE'] = pd.to_datetime(dfteam['DATE'])
+#dfteam.drop(columns=['F'], inplace=True)   
+#df = df.merge(dfteam, how='left', left_on=['DATE','OWN TEAM'], right_on=['DATE', 'TEAMS'])
+#
+#
+
 df['GAME-ID']=df.apply(f_gameID, axis=1)
 df['DATE'] = pd.to_datetime(df['DATE'])
 # loop for every game
@@ -136,12 +172,7 @@ for i in uniqueGames:
 
 
 
-    
-df_data.columns=['actual','Player_FPS','Player_FPS_Short',
-                                              'Median_FPS', 'Std_FPS', 'Max_FPS', 'Min_FPS',
-                                              'Opp_FPS_Ag', 'Opp_FPS_For',
-                                              'Own_FPS_Ag', 'Own_FPS_For',
-                                              'DaysOff','place','Player', 'day']
+df_data.columns = list(var_list.keys())
 # ------------------------
 
 
@@ -156,7 +187,16 @@ def f_place(x):
         return 1
 df_data['place']=df_data.apply(f_place, axis=1)
 
+############################################## PANEL DATA
+df_dummies = pd.get_dummies(df_data['Player'])
+dfnew = pd.concat([df_data,df_dummies], axis=1)
+
+
+
+
 #df_data.to_pickle('RBS dataframe N'+str(N)+'.pkl')
+os.chdir('C:\\GitHub\\nba-python\\Fantasy\\FPS Input Data for Model')
+dfnew.to_pickle('2017-2018 DFS Input test.pkl')
 
 
 
