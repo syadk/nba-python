@@ -3,13 +3,21 @@ import os
 from itertools import permutations
 from pulp import *
 import re
+from datetime import datetime, timedelta
 
-#os.chdir('C:\\Users\\syad\\OneDrive\\NBA Python\\2019 Fantasy Random Work\\Optimizing DFS Lineups with contraints')
-os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Optimizing Lineups')
-
-df = pd.read_csv('nov 17 test.csv')
+os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Optimizing Lineups\\Daily Salaries')
+df = pd.read_csv('DKSalaries_dec20.csv')
 df.drop(columns=['Name + ID','Game Info', 'TeamAbbrev'], inplace=True)
 
+os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Optimizing Lineups\\Daily Injuries')
+df_injuries = pd.read_excel('nba-injury-report.xlsx')
+df_injuries = df_injuries[['Player', 'Status']]
+
+df = df.merge(df_injuries, how="left", left_on='Name', right_on='Player')
+
+df['Status'] = df['Status'].astype(str)
+df = df.loc[df['Status'] == 'nan']
+df.drop(columns=['Player', 'Status'], inplace=True)
 
 
 def string_match(cell, string):
@@ -170,16 +178,47 @@ for i in names:
     dftemp = df.loc[df['Name'] == i]
     dftemp['name_unclean'] = names_unclean[count]
     print(names_unclean[count])
-#    dftemp = dftemp.transpose()
     dfview = pd.concat([dfview, dftemp])
 
-#    dfview = dfview.transpose()
-    
+dfview['Optimized Position'] =  dfview['name_unclean'].str.split(pat="_")
+dfview['Optimized Position']  = dfview['Optimized Position'].map(lambda x: x[0])
 salary_used = dfview['Salary'].sum()
 total_points = dfview['AvgPointsPerGame'].sum()
 print(salary_used, total_points)    
 #    
     
-    
-    
-    
+df_upload = pd.DataFrame(columns=['PG','SG','SF','PF','C','G','F','UTIL'], index=[1])
+for i in range(0, dfview.shape[0]):
+    v = dfview['Optimized Position'].iloc[i]
+    id_number = dfview['ID'].iloc[i]
+    if v == 'pg':
+        pg = id_number
+    elif v == 'sg':
+        sg = id_number
+    elif v == 'sf':
+        sf = id_number
+    elif v == 'pf':
+        pf = id_number
+    elif v == 'c':
+        c = id_number
+    elif v == 'g':
+        g = id_number
+    elif v == 'f':
+        f = id_number
+    elif v == 'util':
+        util = id_number
+
+df_upload['PG'].iloc[0] = pg
+df_upload['SG'].iloc[0] = sg   
+df_upload['SF'].iloc[0] = sf   
+df_upload['PF'].iloc[0] = pf   
+df_upload['C'].iloc[0] = c   
+df_upload['G'].iloc[0] = g   
+df_upload['F'].iloc[0] = f   
+df_upload['UTIL'].iloc[0] = util   
+
+today = str(datetime.today().day) + "_" + str(datetime.today().month)
+
+os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Optimizing Lineups\\Daily Lineup Uploads')
+excelwriter = str("Lineup Upload_") + today + str(".xlsx")
+df_upload.to_excel(excelwriter, index=False)
