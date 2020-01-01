@@ -102,6 +102,7 @@ def partTwo(GameID):
                                               'Player_Turnovers':Player_Turnovers, 'Player_Blocks':Player_Blocks,
                                               'Opp_FPS_Ag':Opp_FPS_Ag, 'Opp_FPS_For':Opp_FPS_For,
                                               'Own_FPS_Ag':Own_FPS_Ag, 'Own_FPS_For':Own_FPS_For,
+                                              'Own_Team':ownTeam, 'Opp_team':oppTeam,
                                               'DaysOff':DaysOff,'place':place,'Player':i,'day':day}
                         df_temp=pd.DataFrame.from_dict(var_list, orient='index').transpose()                       
                         df_out=pd.concat([df_out, df_temp])
@@ -139,8 +140,8 @@ def f_gameID(x):
 ###########################2018-2019 ###################################
 os.chdir('C:\\GitHub\\nba-python\\BigDataBall Data\Pickle')
 df = pd.read_pickle('NBA-2017-2018-Player-Boxscore-DFS_merged.pkl')
-
-df.rename(columns={'FPS - FANDUEL':'FPS','OPPONENT TEAM':'OPP TEAM', 'PLAYER':'PLAYER FULL NAME'},
+##### very important to specify which website points are being predicted
+df.rename(columns={'FPS - DRAFTKINGS':'FPS','OPPONENT TEAM':'OPP TEAM', 'PLAYER':'PLAYER FULL NAME'},
           inplace=True)
 os.chdir('C:\\GitHub\\nba-python\\BigDataBall Data')
 #add win loss % to original dataframes

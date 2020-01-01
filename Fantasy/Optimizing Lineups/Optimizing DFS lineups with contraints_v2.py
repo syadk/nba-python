@@ -5,12 +5,13 @@ from pulp import *
 import re
 from datetime import datetime, timedelta
 
-os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Optimizing Lineups\\Daily Salaries')
-df = pd.read_csv('DKSalaries_dec20.csv')
+#os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Optimizing Lineups\\Daily Salaries')
+os.chdir('C:\\Users\\syad\\Downloads')
+df = pd.read_csv('DKSalaries (7).csv')
 df.drop(columns=['Name + ID','Game Info', 'TeamAbbrev'], inplace=True)
 
-os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Optimizing Lineups\\Daily Injuries')
-df_injuries = pd.read_excel('nba-injury-report.xlsx')
+#os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Optimizing Lineups\\Daily Injuries')
+df_injuries = pd.read_excel('nba-injury-report (6).xlsx')
 df_injuries = df_injuries[['Player', 'Status']]
 
 df = df.merge(df_injuries, how="left", left_on='Name', right_on='Player')
@@ -220,5 +221,5 @@ df_upload['UTIL'].iloc[0] = util
 today = str(datetime.today().day) + "_" + str(datetime.today().month)
 
 os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Optimizing Lineups\\Daily Lineup Uploads')
-excelwriter = str("Lineup Upload_") + today + str(".xlsx")
-df_upload.to_excel(excelwriter, index=False)
+excelwriter = str("Lineup Upload_") + today + str(".csv")
+df_upload.to_csv(excelwriter, index=False)

@@ -16,8 +16,8 @@ df2016_dfs.drop(columns= ['DATASET', 'OWN TEAM',
        'OPPONENT TEAM', 'VENUE (R/H)', 'MINUTES',
        'USAGE RATE', 
        'POS - DRAFTKINGS', 'POS - FANDUEL', 'POS - YAHOO', 
-       'SAL - DRAFTKINGS', 'SAL - YAHOO',
-       'FPS - DRAFTKINGS', 'FPS - YAHOO'], inplace=True)
+       'SAL - YAHOO',
+       'FPS - YAHOO'], inplace=True)
 
 df2016_player = pd.read_excel('NBA-2016-2017-Player-BoxScore-Dataset.xlsx')
 df2016_player.columns = ['DATASET', 'DATE',  'PLAYER',
@@ -40,8 +40,8 @@ df2017_dfs.columns = ['DATASET', 'DATE', 'PLAYER', 'OWN TEAM',
 df2017_dfs.drop(columns= ['DATASET', 'OWN TEAM',
        'OPPONENT TEAM', 'VENUE (R/H)', 'MINUTES',
        'USAGE RATE', 'POS - DRAFTKINGS', 'POS - FANDUEL',
-       'POS - YAHOO', 'SAL - DRAFTKINGS','SAL - YAHOO',
-       'FPS - DRAFTKINGS', 'FPS - YAHOO'], inplace=True)
+       'POS - YAHOO', 'SAL - YAHOO',
+       'FPS - YAHOO'], inplace=True)
 
 df2017_player = pd.read_excel('NBA-2017-2018-Player-BoxScore-Dataset.xlsx')
 df2017_player.columns = ['DATASET', 'DATE',  'PLAYER',
@@ -64,8 +64,8 @@ df2018_dfs.columns = ['DATASET', 'GAME-ID', 'DATE', 'PLAYER-ID', 'PLAYER', 'OWN 
 df2018_dfs.drop(columns= ['DATASET', 'GAME-ID', 'PLAYER-ID', 'OWN TEAM',
        'OPPONENT TEAM', 'STARTER (Y/N)', 'VENUE (R/H)', 'MINUTES',
        'USAGE RATE', 'DAYS REST', 'POS - DRAFTKINGS', 'POS - FANDUEL',
-       'POS - YAHOO', 'SAL - DRAFTKINGS','SAL - YAHOO',
-       'FPS - DRAFTKINGS', 'FPS - YAHOO'], inplace=True)
+       'POS - YAHOO', 'SAL - YAHOO',
+       'FPS - YAHOO'], inplace=True)
 
 df2018_player = pd.read_excel('NBA-2018-2019-Player-BoxScore-Dataset.xlsx')
 df2018_player.columns = ['DATASET', 'GAME-ID', 'DATE', 'PLAYER-ID', 'PLAYER',
