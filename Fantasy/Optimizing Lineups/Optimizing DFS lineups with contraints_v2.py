@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import os
 from itertools import permutations
 from pulp import *
@@ -7,11 +8,11 @@ from datetime import datetime, timedelta
 
 #os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Optimizing Lineups\\Daily Salaries')
 os.chdir('C:\\Users\\syad\\Downloads')
-df = pd.read_csv('DKSalaries (7).csv')
+df = pd.read_csv('DKSalaries (9).csv')
 df.drop(columns=['Name + ID','Game Info', 'TeamAbbrev'], inplace=True)
 
 #os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Optimizing Lineups\\Daily Injuries')
-df_injuries = pd.read_excel('nba-injury-report (6).xlsx')
+df_injuries = pd.read_excel('nba-injury-report (8).xlsx')
 df_injuries = df_injuries[['Player', 'Status']]
 
 df = df.merge(df_injuries, how="left", left_on='Name', right_on='Player')
@@ -19,6 +20,51 @@ df = df.merge(df_injuries, how="left", left_on='Name', right_on='Player')
 df['Status'] = df['Status'].astype(str)
 df = df.loc[df['Status'] == 'nan']
 df.drop(columns=['Player', 'Status'], inplace=True)
+
+####### sharpe ratio filter
+os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Optimizing Lineups')
+df_dfs = pd.read_excel('01-02-2020-nba-season-dfs-feed.xlsx', header=1)
+df_dfs.columns = ['DATASET', 'GAME-ID', 'DATE', 'PLAYER-ID', 'PLAYER', 'OWN TEAM',
+       'OPPONENT TEAM', 'STARTER (Y/N)', 'VENUE (R/H)', 'MINUTES',
+       'USAGE RATE', 'DAYS REST', 
+       'POS - DRAFTKINGS', 'POS - FANDUEL', 'POS - YAHOO',
+       'SAL - DRAFTKINGS','SAL - FANDUEL', 'SAL - YAHOO',
+       'FPS - DRAFTKINGS', 'FPS - FANDUEL', 'FPS - YAHOO']
+df_dfs.drop(columns= ['DATASET', 'GAME-ID', 'PLAYER-ID', 'OWN TEAM',
+       'OPPONENT TEAM', 'STARTER (Y/N)', 'VENUE (R/H)', 'MINUTES',
+       'USAGE RATE', 'DAYS REST', 
+       'POS - DRAFTKINGS', 'POS - FANDUEL', 'POS - YAHOO', 
+       'SAL - FANDUEL', 'SAL - YAHOO', 
+       'FPS - FANDUEL', 'FPS - YAHOO'], inplace=True)
+
+
+df['FPS STD10'] = np.nan
+df['FPS STD5'] = np.nan
+df['FPS STD2'] = np.nan
+df['Games Played'] = 0
+df['Min FPS'] = 0
+for i in df['Name']:
+    dfplayer = df_dfs.loc[df_dfs['PLAYER'] == i]
+    gp = dfplayer.shape[0]
+    df.loc[df['Name'] == i, 'Games Played'] = gp
+    df.loc[df['Name'] == i, 'Min FPS'] = dfplayer['FPS - DRAFTKINGS'].tail(10).min()
+    if gp >= 10:
+        df.loc[df['Name'] == i, 'FPS STD10'] = dfplayer['FPS - DRAFTKINGS'].tail(10).std()
+    if gp >= 5:
+        df.loc[df['Name'] == i, 'FPS STD5'] = dfplayer['FPS - DRAFTKINGS'].tail(5).std()
+    if gp >= 2:
+        df.loc[df['Name'] == i, 'FPS STD2'] = dfplayer['FPS - DRAFTKINGS'].tail(2).std()
+
+
+
+df['Sharpe5'] = df['AvgPointsPerGame'] / df['FPS STD5']
+df['Sharpe10'] = df['AvgPointsPerGame'] / df['FPS STD10']
+
+#now filters
+df = df.loc[df['Sharpe5'] > 2]
+df = df.loc[df['Sharpe10'] > 2]
+df = df.loc[df['Salary'] > 3000]
+
 
 
 def string_match(cell, string):
@@ -38,6 +84,9 @@ df['UTIL'] = df['Roster Position'].apply(string_match, args=('UTIL', ))
 
 
 availables = df.copy()
+availables.drop(columns=['FPS STD10', 'FPS STD5', 'FPS STD2',
+                         'Games Played', 'Min FPS',
+                         'Sharpe5', 'Sharpe10'], inplace=True)
 availables.columns = ['Position', 'Name', 'ID', 'Roster Position', 'Salary',
        'Points', 'PG', 'SG', 'SF', 'PF', 'C', 'G', 'F', 'UTIL']
 availables.set_index('Name', inplace=True)
