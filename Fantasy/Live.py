@@ -1,17 +1,74 @@
 import pandas as pd
 import os
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.utils.tensorboard import SummaryWriter
+from torch.utils.data import Dataset, TensorDataset, DataLoader
 
 #first we have to convert the 2018/2019 season to 2019/2020 just as a placeholder and convert all the date/relevant_column
-os.chdir('C:\\GitHub\\nba-python\\BigDataBall Data')
-df = pd.read_excel('NBA-2018-2019-Player-Boxscore-DFS_merged.xlsx')
+os.chdir('C:\\GitHub\\nba-python\\Fantasy')
 
-df['DATASET'] = 'NBA 2019-2020 Regular Season'
-df['DATE'] = pd.to_datetime(df['DATE'])
-df['DATE'] = df['DATE'] + pd.DateOffset(years=1)
+df_dfs = pd.read_excel('01-01-2020-nba-season-dfs-feed.xlsx', header=1)
+df_dfs.columns = ['DATASET', 'GAME-ID', 'DATE', 'PLAYER-ID', 'PLAYER', 'OWN TEAM',
+       'OPPONENT TEAM', 'STARTER (Y/N)', 'VENUE (R/H)', 'MINUTES',
+       'USAGE RATE', 'DAYS REST', 
+       'POS - DRAFTKINGS', 'POS - FANDUEL', 'POS - YAHOO',
+       'SAL - DRAFTKINGS','SAL - FANDUEL', 'SAL - YAHOO',
+       'FPS - DRAFTKINGS', 'FPS - FANDUEL', 'FPS - YAHOO']
+df_dfs.drop(columns= ['DATASET', 'GAME-ID', 'PLAYER-ID', 'OWN TEAM',
+       'OPPONENT TEAM', 'STARTER (Y/N)', 'VENUE (R/H)', 'MINUTES',
+       'USAGE RATE', 'DAYS REST', 
+       'POS - DRAFTKINGS', 'POS - FANDUEL', 'POS - YAHOO', 
+       'SAL - YAHOO',
+       'FPS - YAHOO'], inplace=True)
 
+df_player = pd.read_excel('01-01-2020-nba-season-player-feed.xlsx')
+df_player.columns = ['DATASET', 'GAME-ID', 'DATE', 'PLAYER-ID', 'PLAYER',
+       'POSITION', 'OWN TEAM', 'OPPONENT TEAM', 'VENUE (R/H)',
+       'STARTER (Y/N)', 'MIN', 'FG', 'FGA', '3P', '3PA', 'FT', 'FTA', 'OR',
+       'DR', 'TOT', 'A', 'PF', 'ST', 'TO', 'BL', 'PTS', 'USAGE RATE',
+       'DAYS REST']
+df_player.drop(columns = ['GAME-ID', 'PLAYER-ID', 'STARTER (Y/N)', 'USAGE RATE', 'DAYS REST'], inplace=True)
+
+df_merged = df_player.merge(df_dfs, how='left', left_on=['DATE', 'PLAYER'],
+                            right_on=['DATE', 'PLAYER'])
+
+del df_dfs, df_player
 #inputs: player, date, player's team, opponents's team, player home/away
+#use Draftking data to get some of the inputs
+os.chdir('C:\\GitHub\\nba-python\\Fantasy')
+df_dk = pd.read_csv('DKSalaries (10).csv', skiprows=6)
+df_dk.drop(columns=['Unnamed: 0', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4',
+       'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7', 'Unnamed: 8','Position',
+       'Name + ID','ID', 'Roster Position', 'Salary',
+       'AvgPointsPerGame'], inplace=True)
 
- 
+df_dk['Team1'] = df_dk['Game Info'].str.split("@", n = 1, expand = True)[0]
+df_dk['Team2'] = df_dk['Game Info'].str.split("@", n = 1, expand = True)[1].str.split(" ", n = 1, expand = True)[0]
+df_dk['Date'] = df_dk['Game Info'].str.split("@", n = 1, expand = True)[1].str.split(" ", n = 1, expand = True)[1]
+df_dk['Date'] = df_dk['Date'].str.split(" ", n = 1, expand = True)[0]
+df_dk['Date'] = pd.to_datetime(df_dk['Date'])
+df_dk['Player Team'] = ''
+df_dk['Opp Team'] = ''
+df_dk['Home'] = 0
+for i in range(df_dk.shape[0]):
+    team = df_dk['TeamAbbrev'].iloc[i]
+    team1 = df_dk['Team1'].iloc[i]
+    team2 = df_dk['Team2'].iloc[i]
+    if team == team1:
+        df_dk['Player Team'].iloc[i] = team1
+        df_dk['Opp Team'].iloc[i] = team2
+    elif team == team2:
+        df_dk['Player Team'].iloc[i] = team2
+        df_dk['Opp Team'].iloc[i] = team1
+        df_dk['Home'].iloc[i] = 1
+#df_dk.drop(columns=['TeamAbbrev','Team1','Team2'], inplace=True)
+        
+    
+
+
+
 def partTwo(player, date, ownTeam, oppTeam, home):
     
     threshold=3
@@ -111,3 +168,35 @@ def partTwo(player, date, ownTeam, oppTeam, home):
                         df_out=pd.concat([df_out, df_temp])
     return df_out
         
+
+
+
+#predict using the trained points
+class NeuralNet(nn.Module):
+    def __init__(self, input_size, layers_size, num_layers, output_size):
+        super(NeuralNet, self).__init__()
+        self.linears = nn.ModuleList([nn.Linear(input_size, layers_size)])
+        for i in range(1, num_layers - 1):
+            self.linears.extend([nn.Linear(layers_size, layers_size)])
+        self.linears.append(nn.Linear(layers_size, output_size))
+        self.sigmoid = nn.Sigmoid()
+
+        
+    
+    def forward(self, x):
+        for i in range(len(self.linears)-1):
+            x = F.relu(self.linears[i](x))
+        x = self.linears[i+1](x)
+        return x
+
+input_size = 507
+output_size = 1
+layers_size = 5
+num_layers = 5
+
+model = NeuralNet(input_size, layers_size, num_layers, output_size)
+
+os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Trained Models')
+checkpoint = torch.load("model.pt")
+model.load_state_dict(checkpoint["model_state_dict"])
+
