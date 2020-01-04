@@ -38,7 +38,7 @@ def load_data(file):
     os.chdir('C:\\GitHub\\nba-python\\Fantasy\\FPS Input Data for Model')
     df = pd.read_pickle(file)
     df = df.dropna()
-    df.drop(columns=['Player', 'day'],inplace=True)
+    df.drop(columns=['Player', 'day', 'Own_Team','Opp_team'],inplace=True)
 #    df = df[['actual', 'Player_FPS']]
     df.reset_index(drop=True,inplace=True)
 
@@ -152,6 +152,12 @@ def main(file, layers_size, num_layers, num_epochs, weight_decay, comment):
     model_trained, train_error = train(model, num_epochs, learning_rate, weight_decay, train_loader, device, comment)
     test_error, y_pred, testy = test(model_trained, test_loader)
 
+    #saving the trained model
+    os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Trained Models')
+
+    checkpoint = {"model_state_dict":model_trained.state_dict()}
+    torch.save(checkpoint, "model.pt")
+    
     
     return(test_error, train_error, y_pred, testy)
 #combine(test_file, input_size, layers_size, num_layers, output_size)
@@ -163,7 +169,7 @@ file = '2017-2018 DFS Input test.pkl'
     
 
 
-params = OrderedDict(epochs = [200],
+params = OrderedDict(epochs = [20],
                      regularization = [0.001],
                      layers_size = [5],
                      num_layers = [5])
