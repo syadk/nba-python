@@ -189,8 +189,8 @@ def f_place(x):
 df_data['place']=df_data.apply(f_place, axis=1)
 
 ############################################## PANEL DATA
-df_dummies = pd.get_dummies(df_data['Player'])
-dfnew = pd.concat([df_data,df_dummies], axis=1)
+#df_dummies = pd.get_dummies(df_data['Player'])
+#dfnew = pd.concat([df_data,df_dummies], axis=1)
 
 
 
