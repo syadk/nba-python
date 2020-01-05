@@ -6,9 +6,8 @@ import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import Dataset, TensorDataset, DataLoader
 
-#first we have to convert the 2018/2019 season to 2019/2020 just as a placeholder and convert all the date/relevant_column
 os.chdir('C:\\GitHub\\nba-python\\Fantasy')
-
+#load to dfs data
 df_dfs = pd.read_excel('01-01-2020-nba-season-dfs-feed.xlsx', header=1)
 df_dfs.columns = ['DATASET', 'GAME-ID', 'DATE', 'PLAYER-ID', 'PLAYER', 'OWN TEAM',
        'OPPONENT TEAM', 'STARTER (Y/N)', 'VENUE (R/H)', 'MINUTES',
@@ -22,7 +21,7 @@ df_dfs.drop(columns= ['DATASET', 'GAME-ID', 'PLAYER-ID', 'OWN TEAM',
        'POS - DRAFTKINGS', 'POS - FANDUEL', 'POS - YAHOO', 
        'SAL - YAHOO',
        'FPS - YAHOO'], inplace=True)
-
+#load the player data
 df_player = pd.read_excel('01-01-2020-nba-season-player-feed.xlsx')
 df_player.columns = ['DATASET', 'GAME-ID', 'DATE', 'PLAYER-ID', 'PLAYER',
        'POSITION', 'OWN TEAM', 'OPPONENT TEAM', 'VENUE (R/H)',
@@ -30,13 +29,15 @@ df_player.columns = ['DATASET', 'GAME-ID', 'DATE', 'PLAYER-ID', 'PLAYER',
        'DR', 'TOT', 'A', 'PF', 'ST', 'TO', 'BL', 'PTS', 'USAGE RATE',
        'DAYS REST']
 df_player.drop(columns = ['GAME-ID', 'PLAYER-ID', 'STARTER (Y/N)', 'USAGE RATE', 'DAYS REST'], inplace=True)
-
+#merge dfs and player
 df_merged = df_player.merge(df_dfs, how='left', left_on=['DATE', 'PLAYER'],
                             right_on=['DATE', 'PLAYER'])
+df_merged['DATE'] = pd.to_datetime(df_merged['DATE'])
+
 
 del df_dfs, df_player
 #inputs: player, date, player's team, opponents's team, player home/away
-#use Draftking data to get some of the inputs
+#use Draftking data to get these inputs
 os.chdir('C:\\GitHub\\nba-python\\Fantasy')
 df_dk = pd.read_csv('DKSalaries (10).csv', skiprows=6)
 df_dk.drop(columns=['Unnamed: 0', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4',
@@ -65,18 +66,36 @@ for i in range(df_dk.shape[0]):
         df_dk['Home'].iloc[i] = 1
 #df_dk.drop(columns=['TeamAbbrev','Team1','Team2'], inplace=True)
         
-    
+#replace team name abbreviations with full names
+os.chdir('C:\\GitHub\\nba-python\\BigDataBall Data')
+df_ref = pd.read_excel('Team Abbreviations.xlsx')
+df_ref['INITIALS'] = df_ref['INITIALS'].str.upper()
+df_ref.set_index(df_ref['INITIALS'], inplace=True)
+df_ref.drop(columns=['INITIALS'], inplace=True)
+team_names = df_ref.to_dict()
+team_names = team_names['SHORT NAME']
+df_dk.replace(team_names, inplace=True)
+
+player = df_dk['Name'].iloc[0]
+day= df_dk['Date'].iloc[0]
+ownTeam= df_dk['Player Team'].iloc[0]
+oppTeam = df_dk['Opp Team'].iloc[0]
+place = df_dk['Home'].iloc[0]
+df = df_merged.copy()
+df.rename(columns={'FPS - DRAFTKINGS':'FPS','OPPONENT TEAM':'OPP TEAM', 'PLAYER':'PLAYER FULL NAME'},
+          inplace=True)
+N=5
+N2=2
 
 
-
-def partTwo(player, date, ownTeam, oppTeam, home):
+def partTwo(df, player, day, ownTeam, oppTeam, place):
     
     threshold=3
-    df_Game = df.loc[df['GAME-ID'] == GameID]
-    oppTeam=df_Game['OPP TEAM'].iloc[0]
-    ownTeam=df_Game['OWN TEAM'].iloc[0]
-    day=df_Game['DATE'].iloc[0]
-    place=df_Game['VENUE (R/H)'].iloc[0]
+#    df_Game = df.loc[df['GAME-ID'] == GameID]
+#    oppTeam=df_Game['OPP TEAM'].iloc[0]
+#    ownTeam=df_Game['OWN TEAM'].iloc[0]
+#    day=df_Game['DATE'].iloc[0]
+#    place=df_Game['VENUE (R/H)'].iloc[0]
     df_out=pd.DataFrame()        
 
     
@@ -122,53 +141,53 @@ def partTwo(player, date, ownTeam, oppTeam, home):
 
             ##############################################################################
         	   #Go through each player
-            for i in df_Game['PLAYER FULL NAME']:
-                df_Player=df[df['PLAYER FULL NAME']==i]
-                actual=df_Player[df_Player['DATE']==day]['FPS'].iloc[0] 
-                #Only want data before today to calculate historical statistics
-                df_Player=df_Player[df_Player['DATE']<day]
-                if df_Player.shape[0]>=N:
-                    if sum(df_Player['FPS'].tail(N))>threshold*N:
-                        #Calculate player statistics
-                        Player_FPS=((df_Player['FPS'].tail(N)).sum())/N
-                        Player_FPS_Short=((df_Player['FPS'].tail(N2)).sum())/N2
-                        DaysOff=day-df_Player['DATE'].iloc[-1]
-                        Median_FPS=df_Player['FPS'].tail(N).median()
-                        Std_FPS=df_Player['FPS'].tail(N).std()
-                        Max_FPS=df_Player['FPS'].tail(N).max()-((df_Player['FPS'].tail(N)).sum())/N
-                        Min_FPS=df_Player['FPS'].tail(N).min()-((df_Player['FPS'].tail(N)).sum())/N
-                        Player_Points = df_Player['PTS'].tail(N).sum()/N
-                        Player_TOT = df_Player['TOT'].tail(N).sum()/N
-                        Player_Minutes = df_Player['MIN'].tail(N).sum()/N
-                        Player_FG = df_Player['FG'].tail(N).sum()/N
-                        Player_FGA = df_Player['FGA'].tail(N).sum()/N
-                        Player_3P = df_Player['3P'].tail(N).sum()/N
-                        Player_3PA = df_Player['3PA'].tail(N).sum()/N
-                        Player_Assists = df_Player['A'].tail(N).sum()/N
-                        Player_Fouls = df_Player['PF'].tail(N).sum()/N
-                        Player_Turnovers = df_Player['TO'].tail(N).sum()/N
-                        Player_Blocks = df_Player['BL'].tail(N).sum()/N
-                        #think about putting salary, prob not though since will heavily influence model with their predictions
-                        #Put result together with indicators
-                        global var_list
+#            for i in df_Game['PLAYER FULL NAME']:
+            df_Player=df[df['PLAYER FULL NAME']==player]
+#            actual=df_Player[df_Player['DATE']==day]['FPS'].iloc[0] 
+            #Only want data before today to calculate historical statistics
+            df_Player=df_Player[df_Player['DATE']<day]
+            if df_Player.shape[0]>=N:
+                if sum(df_Player['FPS'].tail(N))>threshold*N:
+                    #Calculate player statistics
+                    Player_FPS=((df_Player['FPS'].tail(N)).sum())/N
+                    Player_FPS_Short=((df_Player['FPS'].tail(N2)).sum())/N2
+                    DaysOff=day-df_Player['DATE'].iloc[-1]
+                    Median_FPS=df_Player['FPS'].tail(N).median()
+                    Std_FPS=df_Player['FPS'].tail(N).std()
+                    Max_FPS=df_Player['FPS'].tail(N).max()-((df_Player['FPS'].tail(N)).sum())/N
+                    Min_FPS=df_Player['FPS'].tail(N).min()-((df_Player['FPS'].tail(N)).sum())/N
+                    Player_Points = df_Player['PTS'].tail(N).sum()/N
+                    Player_TOT = df_Player['TOT'].tail(N).sum()/N
+                    Player_Minutes = df_Player['MIN'].tail(N).sum()/N
+                    Player_FG = df_Player['FG'].tail(N).sum()/N
+                    Player_FGA = df_Player['FGA'].tail(N).sum()/N
+                    Player_3P = df_Player['3P'].tail(N).sum()/N
+                    Player_3PA = df_Player['3PA'].tail(N).sum()/N
+                    Player_Assists = df_Player['A'].tail(N).sum()/N
+                    Player_Fouls = df_Player['PF'].tail(N).sum()/N
+                    Player_Turnovers = df_Player['TO'].tail(N).sum()/N
+                    Player_Blocks = df_Player['BL'].tail(N).sum()/N
+                    #think about putting salary, prob not though since will heavily influence model with their predictions
+                    #Put result together with indicators
+                    global var_list
 
-                        var_list = {'actual':actual, 'Player_FPS':Player_FPS, 'Player_FPS_Short':Player_FPS_Short,
-                                              'Median_FPS':Median_FPS, 'Std_FPS':Std_FPS, 'Max_FPS':Max_FPS,
-                                              'Min_FPS':Min_FPS, 'Player_Points':Player_Points, 'Player_TOT':Player_TOT,
-                                              'Player_Minutes':Player_Minutes, 
-                                              'Player_FG':Player_FG, 'Player_FGA':Player_FGA,
-                                              'Player_3P':Player_3P, 'Player_3PA':Player_3PA,
-                                              'Player_Assists':Player_Assists, 'Player_Fouls':Player_Fouls,
-                                              'Player_Turnovers':Player_Turnovers, 'Player_Blocks':Player_Blocks,
-                                              'Opp_FPS_Ag':Opp_FPS_Ag, 'Opp_FPS_For':Opp_FPS_For,
-                                              'Own_FPS_Ag':Own_FPS_Ag, 'Own_FPS_For':Own_FPS_For,
-                                              'Own_Team':ownTeam, 'Opp_team':oppTeam,
-                                              'DaysOff':DaysOff,'place':place,'Player':i,'day':day}
-                        df_temp=pd.DataFrame.from_dict(var_list, orient='index').transpose()                       
-                        df_out=pd.concat([df_out, df_temp])
+                    var_list = {'Player_FPS':Player_FPS, 'Player_FPS_Short':Player_FPS_Short,
+                                          'Median_FPS':Median_FPS, 'Std_FPS':Std_FPS, 'Max_FPS':Max_FPS,
+                                          'Min_FPS':Min_FPS, 'Player_Points':Player_Points, 'Player_TOT':Player_TOT,
+                                          'Player_Minutes':Player_Minutes, 
+                                          'Player_FG':Player_FG, 'Player_FGA':Player_FGA,
+                                          'Player_3P':Player_3P, 'Player_3PA':Player_3PA,
+                                          'Player_Assists':Player_Assists, 'Player_Fouls':Player_Fouls,
+                                          'Player_Turnovers':Player_Turnovers, 'Player_Blocks':Player_Blocks,
+                                          'Opp_FPS_Ag':Opp_FPS_Ag, 'Opp_FPS_For':Opp_FPS_For,
+                                          'Own_FPS_Ag':Own_FPS_Ag, 'Own_FPS_For':Own_FPS_For,
+                                          'Own_Team':ownTeam, 'Opp_team':oppTeam,
+                                          'DaysOff':DaysOff,'place':place,'Player':player,'day':day}
+                    df_temp=pd.DataFrame.from_dict(var_list, orient='index').transpose()                       
+                    df_out=pd.concat([df_out, df_temp])
     return df_out
         
-
+sample = partTwo(df, player, day, ownTeam, oppTeam, place)
 
 
 #predict using the trained points
