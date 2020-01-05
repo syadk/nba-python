@@ -208,7 +208,7 @@ class NeuralNet(nn.Module):
         x = self.linears[i+1](x)
         return x
 
-input_size = 507
+input_size = 23
 output_size = 1
 layers_size = 5
 num_layers = 5
