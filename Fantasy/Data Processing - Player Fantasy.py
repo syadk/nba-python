@@ -197,7 +197,7 @@ df_data['place']=df_data.apply(f_place, axis=1)
 
 #df_data.to_pickle('RBS dataframe N'+str(N)+'.pkl')
 os.chdir('C:\\GitHub\\nba-python\\Fantasy\\FPS Input Data for Model')
-dfnew.to_pickle('2017-2018 DFS Input test.pkl')
+df_data.to_pickle('2017-2018 DFS Input test.pkl')
 
 
 
