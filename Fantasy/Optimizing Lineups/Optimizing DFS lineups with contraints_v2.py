@@ -8,11 +8,11 @@ from datetime import datetime, timedelta
 
 #os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Optimizing Lineups\\Daily Salaries')
 os.chdir('C:\\Users\\syad\\Downloads')
-df = pd.read_csv('DKSalaries (9).csv')
+df = pd.read_csv('DKSalaries (11).csv')
 df.drop(columns=['Name + ID','Game Info', 'TeamAbbrev'], inplace=True)
 
 #os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Optimizing Lineups\\Daily Injuries')
-df_injuries = pd.read_excel('nba-injury-report (8).xlsx')
+df_injuries = pd.read_excel('nba-injury-report (9).xlsx')
 df_injuries = df_injuries[['Player', 'Status']]
 
 df = df.merge(df_injuries, how="left", left_on='Name', right_on='Player')
