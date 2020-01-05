@@ -1,10 +1,13 @@
 import pandas as pd
+import numpy as np
 import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import Dataset, TensorDataset, DataLoader
+from sklearn.preprocessing import StandardScaler
+
 
 os.chdir('C:\\GitHub\\nba-python\\Fantasy')
 #load to dfs data
@@ -76,14 +79,7 @@ team_names = df_ref.to_dict()
 team_names = team_names['SHORT NAME']
 df_dk.replace(team_names, inplace=True)
 
-player = df_dk['Name'].iloc[0]
-day= df_dk['Date'].iloc[0]
-ownTeam= df_dk['Player Team'].iloc[0]
-oppTeam = df_dk['Opp Team'].iloc[0]
-place = df_dk['Home'].iloc[0]
-df = df_merged.copy()
-df.rename(columns={'FPS - DRAFTKINGS':'FPS','OPPONENT TEAM':'OPP TEAM', 'PLAYER':'PLAYER FULL NAME'},
-          inplace=True)
+
 N=5
 N2=2
 
@@ -151,7 +147,7 @@ def partTwo(df, player, day, ownTeam, oppTeam, place):
                     #Calculate player statistics
                     Player_FPS=((df_Player['FPS'].tail(N)).sum())/N
                     Player_FPS_Short=((df_Player['FPS'].tail(N2)).sum())/N2
-                    DaysOff=day-df_Player['DATE'].iloc[-1]
+                    DaysOff=(day-df_Player['DATE'].iloc[-1]).days ###.days is new
                     Median_FPS=df_Player['FPS'].tail(N).median()
                     Std_FPS=df_Player['FPS'].tail(N).std()
                     Max_FPS=df_Player['FPS'].tail(N).max()-((df_Player['FPS'].tail(N)).sum())/N
@@ -186,8 +182,35 @@ def partTwo(df, player, day, ownTeam, oppTeam, place):
                     df_temp=pd.DataFrame.from_dict(var_list, orient='index').transpose()                       
                     df_out=pd.concat([df_out, df_temp])
     return df_out
-        
-sample = partTwo(df, player, day, ownTeam, oppTeam, place)
+       
+#get inputs for all players in the daily Draftkings file
+player = df_dk['Name'].iloc[0]
+day= df_dk['Date'].iloc[0]
+ownTeam= df_dk['Player Team'].iloc[0]
+oppTeam = df_dk['Opp Team'].iloc[0]
+place = df_dk['Home'].iloc[0]
+df = df_merged.copy()
+df.rename(columns={'FPS - DRAFTKINGS':'FPS','OPPONENT TEAM':'OPP TEAM', 'PLAYER':'PLAYER FULL NAME'},
+          inplace=True)
+df_inputs = pd.DataFrame()
+for i in range(df_dk.shape[0]):
+    player = df_dk['Name'].iloc[i]
+    day= df_dk['Date'].iloc[i]
+    ownTeam= df_dk['Player Team'].iloc[i]
+    oppTeam = df_dk['Opp Team'].iloc[i]
+    place = df_dk['Home'].iloc[i]
+    dftemp = partTwo(df, player, day, ownTeam, oppTeam, place)
+    df_inputs = pd.concat([df_inputs,dftemp]) 
+
+df_inputs.drop(columns=['Player', 'day', 'Own_Team','Opp_team'],inplace=True)
+
+
+ 
+####### ADD SCIKITLEARN SCALER, transform inputs to tensors
+
+scaler = StandardScaler()
+inputs = scaler.fit_transform(df_inputs)
+inputs = torch.from_numpy(inputs).float()
 
 
 #predict using the trained points
@@ -219,3 +242,13 @@ os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Trained Models')
 checkpoint = torch.load("model.pt")
 model.load_state_dict(checkpoint["model_state_dict"])
 
+#predict
+predicted = model(inputs).detach().squeeze().numpy()
+
+#attach predicted values to Draftkings data
+os.chdir('C:\\GitHub\\nba-python\\Fantasy')
+df_dk = pd.read_csv('DKSalaries (10).csv', skiprows=6)
+df_dk.drop(columns=['Unnamed: 0', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4',
+       'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7', 'Unnamed: 8',
+       'Name + ID','ID',], inplace=True)
+df_dk['Predicted FPS'] = predicted
