@@ -16,6 +16,8 @@ import os
 import pandas as pd
 import wandb
 import argparse
+from sklearn.externals.joblib import dump, load
+
 
 
 
@@ -41,7 +43,6 @@ def load_data(file):
     df.drop(columns=['Player', 'day', 'Own_Team','Opp_team'],inplace=True)
 #    df = df[['actual', 'Player_FPS']]
     df.reset_index(drop=True,inplace=True)
-
     dftrain, dftest = train_test_split(df, test_size=0.15)
     dftrain.reset_index(drop=True,inplace=True)
     trainy = pd.to_numeric(dftrain['actual'])
@@ -52,6 +53,10 @@ def load_data(file):
     testy = pd.to_numeric(dftest['actual'])
     temp=dftest.drop(['actual'], axis=1)
     testx = scaler.transform(temp)
+    #save the scaler for use outside of this file
+    os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Trained Models')
+    dump(scaler, 'std_scaler.bin', compress=True)
+    
     input_size = temp.shape[1]
     del df, dftrain, dftest, temp
     #turn the pandas series into numpy arrays
@@ -169,7 +174,7 @@ file = '2017-2018 DFS Input test.pkl'
     
 
 
-params = OrderedDict(epochs = [20],
+params = OrderedDict(epochs = [100],
                      regularization = [0.001],
                      layers_size = [5],
                      num_layers = [5])
