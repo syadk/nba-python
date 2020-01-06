@@ -7,6 +7,8 @@ import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import Dataset, TensorDataset, DataLoader
 from sklearn.preprocessing import StandardScaler
+from sklearn.externals.joblib import dump, load
+
 
 
 os.chdir('C:\\GitHub\\nba-python\\Fantasy')
@@ -104,6 +106,7 @@ def partTwo(df, player, day, ownTeam, oppTeam, place):
     
 	 #What was the date of the opposing teams last N
     oppDates=(df_Opp_Ag[df_Opp_Ag['DATE']<day])['DATE'].unique()
+    
     if len(oppDates)-N>=0:
         dayNback=oppDates[len(oppDates)-N]
     
@@ -181,35 +184,38 @@ def partTwo(df, player, day, ownTeam, oppTeam, place):
                                           'DaysOff':DaysOff,'place':place,'Player':player,'day':day}
                     df_temp=pd.DataFrame.from_dict(var_list, orient='index').transpose()                       
                     df_out=pd.concat([df_out, df_temp])
-    return df_out
+    if len(oppDates)-N>=0 and len(ownDates)-N>=0 and df_Player.shape[0]>=N and sum(df_Player['FPS'].tail(N))>threshold*N:        
+        return df_out
+    else: #return the player name if we can't make input data for any of the above conditions
+        return player
        
 #get inputs for all players in the daily Draftkings file
-player = df_dk['Name'].iloc[0]
-day= df_dk['Date'].iloc[0]
-ownTeam= df_dk['Player Team'].iloc[0]
-oppTeam = df_dk['Opp Team'].iloc[0]
-place = df_dk['Home'].iloc[0]
 df = df_merged.copy()
 df.rename(columns={'FPS - DRAFTKINGS':'FPS','OPPONENT TEAM':'OPP TEAM', 'PLAYER':'PLAYER FULL NAME'},
           inplace=True)
 df_inputs = pd.DataFrame()
+invalid_players = []
 for i in range(df_dk.shape[0]):
     player = df_dk['Name'].iloc[i]
     day= df_dk['Date'].iloc[i]
     ownTeam= df_dk['Player Team'].iloc[i]
     oppTeam = df_dk['Opp Team'].iloc[i]
     place = df_dk['Home'].iloc[i]
-    dftemp = partTwo(df, player, day, ownTeam, oppTeam, place)
-    df_inputs = pd.concat([df_inputs,dftemp]) 
+    if type(partTwo(df, player, day, ownTeam, oppTeam, place)) == str:
+        invalid_players.append(partTwo(df, player, day, ownTeam, oppTeam, place))
+    else:
+        dftemp = partTwo(df, player, day, ownTeam, oppTeam, place)
+        df_inputs = pd.concat([df_inputs,dftemp])
 
 df_inputs.drop(columns=['Player', 'day', 'Own_Team','Opp_team'],inplace=True)
 
 
  
 ####### ADD SCIKITLEARN SCALER, transform inputs to tensors
+os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Trained Models')
 
-scaler = StandardScaler()
-inputs = scaler.fit_transform(df_inputs)
+scaler = load('std_scaler.bin')
+inputs = scaler.transform(df_inputs)
 inputs = torch.from_numpy(inputs).float()
 
 
@@ -251,4 +257,9 @@ df_dk = pd.read_csv('DKSalaries (10).csv', skiprows=6)
 df_dk.drop(columns=['Unnamed: 0', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4',
        'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7', 'Unnamed: 8',
        'Name + ID','ID',], inplace=True)
+#drop players that we don't have input data for
+for i in df_dk['Name']:
+    if i in invalid_players:
+        df_dk = df_dk[df_dk['Name'] != i]
+    
 df_dk['Predicted FPS'] = predicted
