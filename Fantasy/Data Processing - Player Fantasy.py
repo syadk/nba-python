@@ -6,8 +6,7 @@ import numpy as np
 
 
 
-N=5
-N2=2
+N=6
  
 def partTwo(GameID):
     
@@ -71,7 +70,16 @@ def partTwo(GameID):
                     if sum(df_Player['FPS'].tail(N))>threshold*N:
                         #Calculate player statistics
                         Player_FPS=((df_Player['FPS'].tail(N)).sum())/N
-                        Player_FPS_Short=((df_Player['FPS'].tail(N2)).sum())/N2
+                        Player_FPS_1 = (df_Player['FPS'].tail(1).sum())/1
+                        Player_FPS_2 = (df_Player['FPS'].tail(2).sum())/2
+                        Player_FPS_3 = (df_Player['FPS'].tail(3).sum())/3
+                        Player_FPS_4 = (df_Player['FPS'].tail(4).sum())/4
+                        Player_FPS_5 = (df_Player['FPS'].tail(5).sum())/5
+                        Player_FPS_6 = (df_Player['FPS'].tail(6).sum())/6
+                        Player_FPS_7 = (df_Player['FPS'].tail(7).sum())/7
+                        Player_FPS_8 = (df_Player['FPS'].tail(8).sum())/8
+                        Player_FPS_9 = (df_Player['FPS'].tail(9).sum())/9
+                        Player_FPS_10 = (df_Player['FPS'].tail(10).sum())/10                       
                         DaysOff=day-df_Player['DATE'].iloc[-1]
                         Median_FPS=df_Player['FPS'].tail(N).median()
                         Std_FPS=df_Player['FPS'].tail(N).std()
@@ -92,7 +100,11 @@ def partTwo(GameID):
                         #Put result together with indicators
                         global var_list
 
-                        var_list = {'actual':actual, 'Player_FPS':Player_FPS, 'Player_FPS_Short':Player_FPS_Short,
+                        var_list = {'actual':actual, 'Player_FPS':Player_FPS, 
+                                    'Player_FPS_1':Player_FPS_1, 'Player_FPS_2':Player_FPS_2, 'Player_FPS_3':Player_FPS_3,
+                                    'Player_FPS_4':Player_FPS_4, 'Player_FPS_5':Player_FPS_5, 'Player_FPS_6':Player_FPS_6,
+                                    'Player_FPS_7':Player_FPS_7, 'Player_FPS_8':Player_FPS_8, 'Player_FPS_9':Player_FPS_9,
+                                    'Player_FPS_10':Player_FPS_10,
                                               'Median_FPS':Median_FPS, 'Std_FPS':Std_FPS, 'Max_FPS':Max_FPS,
                                               'Min_FPS':Min_FPS, 'Player_Points':Player_Points, 'Player_TOT':Player_TOT,
                                               'Player_Minutes':Player_Minutes, 
@@ -102,7 +114,7 @@ def partTwo(GameID):
                                               'Player_Turnovers':Player_Turnovers, 'Player_Blocks':Player_Blocks,
                                               'Opp_FPS_Ag':Opp_FPS_Ag, 'Opp_FPS_For':Opp_FPS_For,
                                               'Own_FPS_Ag':Own_FPS_Ag, 'Own_FPS_For':Own_FPS_For,
-                                              'Own_Team':ownTeam, 'Opp_team':oppTeam,
+                                              'Own_Team':ownTeam, 'Opp_Team':oppTeam,
                                               'DaysOff':DaysOff,'place':place,'Player':i,'day':day}
                         df_temp=pd.DataFrame.from_dict(var_list, orient='index').transpose()                       
                         df_out=pd.concat([df_out, df_temp])
@@ -114,65 +126,31 @@ def partTwo(GameID):
 df_data = pd.DataFrame()    
 def f_gameID(x):  
     return x[1]+x[4]+x[5] 
-###########################2016-2017###################################
-#df = pd.read_excel('C:\\GitHub\\nba-python\\Rebounds\\Rebounds Dataframes\\NBA-2016-2017-Player-BoxScore-Dataset.xlsx')
-#df['GameID']=df.apply(f_gameID, axis=1)
-#df['DATE'] = pd.to_datetime(df['DATE'])
-## loop for every game
-#uniqueGames = df['GameID'].unique()
-#for i in uniqueGames:
-#    df_result = pd.DataFrame(partTwo(str(i)))
-#    df_data = pd.concat([df_data, df_result])
-#    print(i)
-#
-############################2017-2018###################################
-#df = pd.read_excel('C:\\GitHub\\nba-python\\Rebounds\\Rebounds Dataframes\\NBA-2017-2018-Player-BoxScore-Dataset.xlsx')
-#df['GameID']=df.apply(f_gameID, axis=1)
-#df['DATE'] = pd.to_datetime(df['DATE'])
-## loop for every game
-#uniqueGames = df['GameID'].unique()
-#for i in uniqueGames:
-#    df_result = pd.DataFrame(partTwo(str(i)))
-#    df_data = pd.concat([df_data, df_result])
-#    print(i)
-    
 
-###########################2018-2019 ###################################
 os.chdir('C:\\GitHub\\nba-python\\BigDataBall Data\Pickle')
-df = pd.read_pickle('NBA-2017-2018-Player-Boxscore-DFS_merged.pkl')
-##### very important to specify which website points are being predicted
-df.rename(columns={'FPS - DRAFTKINGS':'FPS','OPPONENT TEAM':'OPP TEAM', 'PLAYER':'PLAYER FULL NAME'},
-          inplace=True)
-os.chdir('C:\\GitHub\\nba-python\\BigDataBall Data')
-#add win loss % to original dataframes
-#dfteam = pd.read_excel('2017-2018_NBA_Box_Score_Team-Stats.xlsx')
-#dfteam = dfteam[['DATE','TEAMS','F']]
-#dfteam['WIN'] = 0
-#for i in range(0, dfteam.shape[0], 2):
-#    if dfteam['F'].iloc[i]>dfteam['F'].iloc[i+1]:
-#        dfteam['WIN'].iloc[i] = 1
-#    else:
-#        dfteam['WIN'].iloc[i+1] = 1
-#dfteam['DATE'] = pd.to_datetime(dfteam['DATE'])
-#dfteam.drop(columns=['F'], inplace=True)   
-#df = df.merge(dfteam, how='left', left_on=['DATE','OWN TEAM'], right_on=['DATE', 'TEAMS'])
-#
-#
+###########################2016-2017###################################
+df2017 = pd.read_pickle('NBA-2016-2017-Player-Boxscore-DFS_merged.pkl')
+############################2017-2018###################################
+df2018 = pd.read_pickle('NBA-2017-2018-Player-Boxscore-DFS_merged.pkl')
+###########################2018-2019 ###################################
+df2019 = pd.read_pickle('NBA-2018-2019-Player-Boxscore-DFS_merged.pkl')
 
+
+######## MERGE ALL 3 SEASONS
+df = pd.concat([df2017,df2018,df2019])
 df['GAME-ID']=df.apply(f_gameID, axis=1)
 df['DATE'] = pd.to_datetime(df['DATE'])
+df.rename(columns={'FPS - DRAFTKINGS':'FPS','OPPONENT TEAM':'OPP TEAM', 'PLAYER':'PLAYER FULL NAME'},
+          inplace=True)
+
+
 # loop for every game
 uniqueGames = df['GAME-ID'].unique()
 for i in uniqueGames:
     df_result = pd.DataFrame(partTwo((i)))
     df_data = pd.concat([df_data, df_result])
     print(i)
-      
-    
-    
-
-
-
+  
 df_data.columns = list(var_list.keys())
 # ------------------------
 
@@ -188,16 +166,18 @@ def f_place(x):
         return 1
 df_data['place']=df_data.apply(f_place, axis=1)
 
-############################################## PANEL DATA
-#df_dummies = pd.get_dummies(df_data['Player'])
-#dfnew = pd.concat([df_data,df_dummies], axis=1)
+#####  ADD DUMMY FOR EACH PLAYER
+df_dummies = pd.get_dummies(df_data['Player'])
+dfnew = pd.concat([df_data,df_dummies], axis=1)
 
 
 
 
 #df_data.to_pickle('RBS dataframe N'+str(N)+'.pkl')
 os.chdir('C:\\GitHub\\nba-python\\Fantasy\\FPS Input Data for Model')
-df_data.to_pickle('2017-2018 DFS Input test.pkl')
+file_name = 'DFS Input_N'+str(N)+'.pkl'
+df_data.to_pickle(file_name)
+#dfnew.to_pickle('DFS Input Test Dummies.pkl')
 
 
 
