@@ -17,12 +17,13 @@ import pandas as pd
 import wandb
 import argparse
 from sklearn.externals.joblib import dump, load
+from datetime import datetime
 
 
 
-
-os.chdir('C:\\GitHub\\nba-python\\Fantasy\\FPS Input Data for Model')
-dfview = pd.read_pickle('2017-2018 DFS Input test.pkl')
+#
+#os.chdir('C:\\GitHub\\nba-python\\Fantasy\\FPS Input Data for Model')
+#dfview = pd.read_pickle('DFS Input Test Dummies.pkl')
 
 
 ########################## Hyper-parameters 
@@ -40,8 +41,9 @@ def load_data(file):
     os.chdir('C:\\GitHub\\nba-python\\Fantasy\\FPS Input Data for Model')
     df = pd.read_pickle(file)
     df = df.dropna()
-    df.drop(columns=['Player', 'day', 'Own_Team','Opp_team'],inplace=True)
+    df.drop(columns=['Player', 'day', 'Own_Team','Opp_Team'],inplace=True)
 #    df = df[['actual', 'Player_FPS']]
+    #save the indicators in a list to use later
     df.reset_index(drop=True,inplace=True)
     dftrain, dftest = train_test_split(df, test_size=0.15)
     dftrain.reset_index(drop=True,inplace=True)
@@ -81,6 +83,7 @@ def load_data(file):
             return len(self.x)
     
     train_data = CustomDataset(trainx, trainy)
+    #batch_size=trainx.shape[0]
     train_loader = DataLoader(dataset=train_data, batch_size=trainx.shape[0], shuffle=True)
     
     test_data = CustomDataset(testx, testy)
@@ -168,16 +171,16 @@ def main(file, layers_size, num_layers, num_epochs, weight_decay, comment):
 #combine(test_file, input_size, layers_size, num_layers, output_size)
 
 learning_rate = 0.01
-file = '2017-2018 DFS Input test.pkl'
+file = 'DFS Input_N6.pkl'
 #
 
     
 
 
-params = OrderedDict(epochs = [100],
-                     regularization = [0.001],
-                     layers_size = [5],
-                     num_layers = [5])
+params = OrderedDict(epochs = [100,200],
+                     regularization = [0.001,0.005,0.01],
+                     layers_size = [5,10],
+                     num_layers = [5,10])
 
 class RunBuilder():
     @staticmethod
@@ -207,3 +210,6 @@ for run in RunBuilder.get_runs(params):
 #quick test
 df_view = pd.DataFrame(data=[y_pred.detach().squeeze().numpy(), testy.numpy()]).transpose()
 
+#save the runs dataframe with info about indicators
+os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Trained Models')
+df.to_excel('Model Parameters and Results.xlsx')
