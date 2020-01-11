@@ -122,7 +122,6 @@ def partTwo(GameID):
         
 
 # -------------------------------------------------------------------------------------------------------------------
-#os.chdir('C:\\Users\Kareem Kudus\Desktop\Python Stuff\Basketball')
 df_data = pd.DataFrame()    
 def f_gameID(x):  
     return x[1]+x[4]+x[5] 
@@ -177,7 +176,8 @@ dfnew = pd.concat([df_data,df_dummies], axis=1)
 os.chdir('C:\\GitHub\\nba-python\\Fantasy\\FPS Input Data for Model')
 file_name = 'DFS Input_N'+str(N)+'.pkl'
 df_data.to_pickle(file_name)
-#dfnew.to_pickle('DFS Input Test Dummies.pkl')
+#file_name2 = 'DFS Input with Dummies_N'+str(N)+'.pkl'
+#dfnew.to_pickle(file_name2)
 
 
 
