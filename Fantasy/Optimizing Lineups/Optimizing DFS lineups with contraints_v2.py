@@ -8,11 +8,11 @@ from datetime import datetime, timedelta
 
 #os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Optimizing Lineups\\Daily Salaries')
 os.chdir('C:\\Users\\syad\\Downloads')
-df = pd.read_csv('DKSalaries (11).csv')
+df = pd.read_csv('DKSalaries (14).csv')
 df.drop(columns=['Name + ID','Game Info', 'TeamAbbrev'], inplace=True)
 
 #os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Optimizing Lineups\\Daily Injuries')
-df_injuries = pd.read_excel('nba-injury-report (9).xlsx')
+df_injuries = pd.read_excel('nba-injury-report (12).xlsx')
 df_injuries = df_injuries[['Player', 'Status']]
 
 df = df.merge(df_injuries, how="left", left_on='Name', right_on='Player')
@@ -22,8 +22,8 @@ df = df.loc[df['Status'] == 'nan']
 df.drop(columns=['Player', 'Status'], inplace=True)
 
 ####### sharpe ratio filter
-os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Optimizing Lineups')
-df_dfs = pd.read_excel('01-02-2020-nba-season-dfs-feed.xlsx', header=1)
+#os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Optimizing Lineups')
+df_dfs = pd.read_excel('01-06-2020-nba-season-dfs-feed.xlsx', header=1)
 df_dfs.columns = ['DATASET', 'GAME-ID', 'DATE', 'PLAYER-ID', 'PLAYER', 'OWN TEAM',
        'OPPONENT TEAM', 'STARTER (Y/N)', 'VENUE (R/H)', 'MINUTES',
        'USAGE RATE', 'DAYS REST', 
