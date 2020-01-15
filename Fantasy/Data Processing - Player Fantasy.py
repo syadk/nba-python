@@ -6,7 +6,7 @@ import numpy as np
 
 
 
-N=6
+N=5
  
 def partTwo(GameID):
     
@@ -64,6 +64,8 @@ def partTwo(GameID):
             for i in df_Game['PLAYER FULL NAME']:
                 df_Player=df[df['PLAYER FULL NAME']==i]
                 actual=df_Player[df_Player['DATE']==day]['FPS'].iloc[0] 
+                starter = df_Player[df_Player['DATE']==day]['STARTER (Y/N)'].iloc[0]
+                season = df_Player[df_Player['DATE']==day]['DATASET'].iloc[0]
                 #Only want data before today to calculate historical statistics
                 df_Player=df_Player[df_Player['DATE']<day]
                 if df_Player.shape[0]>=N:
@@ -114,8 +116,8 @@ def partTwo(GameID):
                                               'Player_Turnovers':Player_Turnovers, 'Player_Blocks':Player_Blocks,
                                               'Opp_FPS_Ag':Opp_FPS_Ag, 'Opp_FPS_For':Opp_FPS_For,
                                               'Own_FPS_Ag':Own_FPS_Ag, 'Own_FPS_For':Own_FPS_For,
-                                              'Own_Team':ownTeam, 'Opp_Team':oppTeam,
-                                              'DaysOff':DaysOff,'place':place,'Player':i,'day':day}
+                                              'Own_Team':ownTeam, 'Opp_Team':oppTeam, 'Starter':starter,
+                                              'DaysOff':DaysOff,'place':place,'Player':i,'day':day, 'Season':season}
                         df_temp=pd.DataFrame.from_dict(var_list, orient='index').transpose()                       
                         df_out=pd.concat([df_out, df_temp])
     return df_out
@@ -167,17 +169,22 @@ df_data['place']=df_data.apply(f_place, axis=1)
 
 #####  ADD DUMMY FOR EACH PLAYER
 df_dummies = pd.get_dummies(df_data['Player'])
-dfnew = pd.concat([df_data,df_dummies], axis=1)
+df_data_dummies = pd.concat([df_data,df_dummies], axis=1)
+##### ADD DUMMY FOR EACH SEASON
+df_dummies = pd.get_dummies(df_data_dummies['Season'])
+df_data_dummies = pd.concat([df_data_dummies,df_dummies], axis=1)
 
-
+#drop some columns
+df_data.drop(columns=['Player', 'day', 'Own_Team','Opp_Team', 'Season'],inplace=True)
+df_data_dummies.drop(columns=['Player', 'day', 'Own_Team','Opp_Team', 'Season'],inplace=True)
 
 
 #df_data.to_pickle('RBS dataframe N'+str(N)+'.pkl')
 os.chdir('C:\\GitHub\\nba-python\\Fantasy\\FPS Input Data for Model')
 file_name = 'DFS Input_N'+str(N)+'.pkl'
 df_data.to_pickle(file_name)
-#file_name2 = 'DFS Input with Dummies_N'+str(N)+'.pkl'
-#dfnew.to_pickle(file_name2)
+file_name2 = 'DFS Input with Dummies_N'+str(N)+'.pkl'
+df_data_dummies.to_pickle(file_name2)
 
 
 
