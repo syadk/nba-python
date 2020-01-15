@@ -14,7 +14,7 @@ from collections import namedtuple
 import numpy as np
 import os
 import pandas as pd
-import wandb
+#import wandb
 import argparse
 from sklearn.externals.joblib import dump, load
 from datetime import datetime
@@ -41,11 +41,9 @@ def load_data(file):
     os.chdir('C:\\GitHub\\nba-python\\Fantasy\\FPS Input Data for Model')
     df = pd.read_pickle(file)
     df = df.dropna()
-    df.drop(columns=['Player', 'day', 'Own_Team','Opp_Team'],inplace=True)
-#    df = df[['actual', 'Player_FPS']]
-    #save the indicators in a list to use later
     df.reset_index(drop=True,inplace=True)
-    dftrain, dftest = train_test_split(df, test_size=0.15)
+    dftrain, dftest = train_test_split(df, test_size=0.15, random_state=101)
+    dftest, dfvalidate = train_test_split(dftest, test_size=0.5, random_state=102)
     dftrain.reset_index(drop=True,inplace=True)
     trainy = pd.to_numeric(dftrain['actual'])
     temp=(dftrain.drop(['actual'], axis=1))
@@ -55,6 +53,9 @@ def load_data(file):
     testy = pd.to_numeric(dftest['actual'])
     temp=dftest.drop(['actual'], axis=1)
     testx = scaler.transform(temp)
+    validatey = pd.to_numeric(dfvalidate['actual'])
+    temp=dfvalidate.drop(['actual'], axis=1)
+    validatex = scaler.transform(temp)
     #save the scaler for use outside of this file
     os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Trained Models')
     dump(scaler, 'std_scaler.bin', compress=True)
@@ -64,11 +65,14 @@ def load_data(file):
     #turn the pandas series into numpy arrays
     testy = testy.values
     trainy = trainy.values
+    validatey=validatey.values
     #turn the numpy arrays into tensors, with x data as type float
     trainx = torch.from_numpy(trainx).float()
     trainy = torch.from_numpy(trainy).float()
     testx = torch.from_numpy(testx).float()
     testy = torch.from_numpy(testy).float()
+    validatex = torch.from_numpy(validatex).float()
+    validatey = torch.from_numpy(validatey).float()
     ##############################################################################
     
     class CustomDataset(Dataset):
@@ -83,16 +87,18 @@ def load_data(file):
             return len(self.x)
     
     train_data = CustomDataset(trainx, trainy)
-    #batch_size=trainx.shape[0]
     train_loader = DataLoader(dataset=train_data, batch_size=trainx.shape[0], shuffle=True)
     
     test_data = CustomDataset(testx, testy)
     test_loader = DataLoader(dataset=test_data, batch_size=testx.shape[0], shuffle=True)
     
+    validate_data = CustomDataset(validatex, validatey)
+    validate_loader = DataLoader(dataset=validate_data, batch_size=validatex.shape[0], shuffle=True)
+    
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
-    return(train_loader, test_loader, device, input_size)
+    return(train_loader, test_loader, device, input_size, validate_loader)
 
 
 #def train(layers_size, num_layers, num_epochs, weight_decay, train_loader, test_loader, device):
@@ -118,7 +124,7 @@ def train(model, num_epochs, learning_rate, weight_decay, train_loader, device, 
 
     # Loss and optimizer
     criterion = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
     # Train the model
     for epoch in range(num_epochs):
@@ -155,10 +161,11 @@ def test(model, test_loader):
 
 def main(file, layers_size, num_layers, num_epochs, weight_decay, comment):
 
-    train_loader, test_loader, device, input_size = load_data(file)
+#    train_loader, test_loader, device, input_size = load_data(file)
     model = NeuralNet(input_size, layers_size, num_layers, output_size)
     model_trained, train_error = train(model, num_epochs, learning_rate, weight_decay, train_loader, device, comment)
-    test_error, y_pred, testy = test(model_trained, test_loader)
+    test_error, test_y_pred, testy = test(model_trained, test_loader)
+    validate_error, validate_y_pred, validatey = test(model_trained, validate_loader)
 
     #saving the trained model
     os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Trained Models')
@@ -167,20 +174,24 @@ def main(file, layers_size, num_layers, num_epochs, weight_decay, comment):
     torch.save(checkpoint, "model.pt")
     
     
-    return(test_error, train_error, y_pred, testy)
+    return(test_error, train_error, test_y_pred, testy, validate_error)
 #combine(test_file, input_size, layers_size, num_layers, output_size)
 
 learning_rate = 0.01
-file = 'DFS Input_N6.pkl'
+file = 'DFS Input_N10.pkl'
 #
 
     
 
 
-params = OrderedDict(epochs = [100,200],
-                     regularization = [0.001,0.005,0.01],
-                     layers_size = [5,10],
-                     num_layers = [5,10])
+#params = OrderedDict(epochs = [200,300],
+#                     regularization = [0.001,0.005,0.01],
+#                     layers_size = [5,10],
+#                     num_layers = [5,10])
+params = OrderedDict(epochs = [300],
+                     regularization = [0.005],
+                     layers_size = [5],
+                     num_layers = [10])
 
 class RunBuilder():
     @staticmethod
@@ -196,20 +207,24 @@ class RunBuilder():
 
 df = pd.DataFrame(columns=['File', 'Epochs','Regularization','Layer Size', 'Number of Layers',
                            'Test Error', 'Train Error'])
-
+    
+train_loader, test_loader, device, input_size, validate_loader = load_data(file)
 for run in RunBuilder.get_runs(params):
     
     comment = f'-{run}'
     print(comment)
-    test_error, train_error, y_pred, testy = main(file, run.layers_size, run.num_layers, run.epochs, run.regularization, comment)
+    
+    test_error, train_error, test_y_pred, testy, validate_error = main(file, run.layers_size, run.num_layers, run.epochs, run.regularization, comment)
         
     df = df.append({'File':file, 'Epochs':run.epochs,'Regularization':run.regularization,
                                     'Layer Size':run.layers_size, 'Number of Layers':run.num_layers, 
-                                    'Test Error':test_error, 'Train Error':train_error}, ignore_index=True)
+                                    'Train Error':train_error, 'Test Error':test_error, 
+                                    'Validate Error':validate_error}, ignore_index=True)
     
 #quick test
-df_view = pd.DataFrame(data=[y_pred.detach().squeeze().numpy(), testy.numpy()]).transpose()
+df_view = pd.DataFrame(data=[test_y_pred.detach().squeeze().numpy(), testy.numpy()]).transpose()
 
 #save the runs dataframe with info about indicators
 os.chdir('C:\\GitHub\\nba-python\\Fantasy\\Trained Models')
-df.to_excel('Model Parameters and Results.xlsx')
+#filename = "Results " + file[:-4] + ".xlsx"
+#df.to_excel(filename)
